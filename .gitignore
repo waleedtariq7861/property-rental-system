@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment files (examples remain tracked)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build and test output
+dist/
+client/dist/
+build/
+coverage/
+.vite/
+
+# Logs and runtime files
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+*.pid.lock
+
+# Runtime uploads (preserve the directory marker)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local database artifacts
+*.sql.gz
+*.sqlite
+*.sqlite3
