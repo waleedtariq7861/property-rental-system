@@ -5,6 +5,7 @@ import houseImage from '../assets/images/property-house-interior.png';
 import roomImage from '../assets/images/property-room-studio.png';
 import officeImage from '../assets/images/property-office-pakistan.png';
 import shopImage from '../assets/images/property-shop-exterior.png';
+import { sanitizeDigits } from '../utils/inputSanitizers.js';
 
 const propertyTypes = [
   {
@@ -152,9 +153,12 @@ function Home() {
 
   function handleChange(event) {
     const { name, value } = event.target;
+    const nextValue = name === 'minRent' || name === 'maxRent'
+      ? sanitizeDigits(value)
+      : value;
     setSearchValues((currentValues) => ({
       ...currentValues,
-      [name]: value,
+      [name]: nextValue,
     }));
   }
 
@@ -261,10 +265,11 @@ function Home() {
                     className="form-control"
                     id="searchMinRent"
                     name="minRent"
-                    type="number"
-                    min="0"
                     inputMode="numeric"
+                    maxLength={9}
+                    pattern="[0-9]*"
                     placeholder="e.g. 50000"
+                    type="text"
                     value={searchValues.minRent}
                     onChange={handleChange}
                   />
@@ -278,10 +283,11 @@ function Home() {
                     className="form-control"
                     id="searchMaxRent"
                     name="maxRent"
-                    type="number"
-                    min="0"
                     inputMode="numeric"
+                    maxLength={9}
+                    pattern="[0-9]*"
                     placeholder="e.g. 150000"
+                    type="text"
                     value={searchValues.maxRent}
                     onChange={handleChange}
                   />

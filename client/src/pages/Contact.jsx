@@ -6,7 +6,7 @@ function Contact() {
           <span className="eyebrow mb-3">Contact</span>
           <h1 className="display-4 fw-bold text-white">Let’s stay connected.</h1>
           <p className="page-hero-copy mx-auto mb-0">
-            Contact workflows will be connected to the RentEase API in a future phase.
+            Reach out directly using the contact details below.
           </p>
         </div>
       </header>
@@ -18,16 +18,20 @@ function Contact() {
                 <div className="feature-icon mx-auto">
                   <i className="bi bi-chat-square-text" aria-hidden="true" />
                 </div>
-                <h2 className="h3">Contact module foundation</h2>
+                <h2 className="h3">Direct contact details</h2>
                 <p className="text-secondary mb-4">
-                  The database is ready to store contact messages. Form submission
-                  will be enabled alongside validation and administration tools in
-                  a later project phase.
+                  Use these details for project communication and support.
                 </p>
-                <span className="badge text-bg-light border px-3 py-2">
-                  <i className="bi bi-tools me-2" aria-hidden="true" />
-                  Planned for a future phase
-                </span>
+                <div className="d-grid gap-3 justify-content-center">
+                  <a className="btn btn-brand btn-lg" href="mailto:waleedtariq7861@gamil.com">
+                    <i className="bi bi-envelope me-2" aria-hidden="true" />
+                    waleedtariq7861@gamil.com
+                  </a>
+                  <a className="btn btn-outline-brand btn-lg" href="tel:+923480577644">
+                    <i className="bi bi-telephone me-2" aria-hidden="true" />
+                    03480577644
+                  </a>
+                </div>
               </div>
             </div>
           </div>

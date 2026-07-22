@@ -39,11 +39,11 @@ function Footer() {
             <ul className="list-unstyled footer-contact mb-3">
               <li>
                 <i className="bi bi-envelope" aria-hidden="true" />
-                support@rentease.test
+                <a href="mailto:waleedtariq7861@gamil.com">waleedtariq7861@gamil.com</a>
               </li>
               <li>
                 <i className="bi bi-telephone" aria-hidden="true" />
-                +92 300 0000000
+                <a href="tel:+923480577644">03480577644</a>
               </li>
               <li>
                 <i className="bi bi-geo-alt" aria-hidden="true" />
