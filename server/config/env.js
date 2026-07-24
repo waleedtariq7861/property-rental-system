@@ -7,6 +7,16 @@ function parsePort(value, fallback) {
   return Number.isInteger(port) && port > 0 ? port : fallback;
 }
 
+function requireEnvironmentVariable(name) {
+  const value = process.env[name]?.trim();
+
+  if (!value) {
+    throw new Error(`${name} must be configured in the environment.`);
+  }
+
+  return value;
+}
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 const env = Object.freeze({
@@ -21,6 +31,10 @@ const env = Object.freeze({
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     name: process.env.DB_NAME || 'rentease_db',
+  },
+  jwt: {
+    secret: requireEnvironmentVariable('JWT_SECRET'),
+    expiresIn: requireEnvironmentVariable('JWT_EXPIRES_IN'),
   },
 });
 

@@ -25,10 +25,6 @@ function errorHandler(error, request, response, next) {
     payload.details = error.details;
   }
 
-  if (!env.isProduction && error.stack) {
-    payload.stack = error.stack;
-  }
-
   return response.status(statusCode).json(payload);
 }
 

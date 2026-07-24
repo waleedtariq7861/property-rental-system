@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import env from '../config/env.js';
 import ApiError from '../utils/ApiError.js';
 import {
   validateLoginPayload,
@@ -10,6 +11,7 @@ import {
   findUserByEmail,
   toPublicUser,
 } from '../services/authService.js';
+import { createAccessToken } from '../services/tokenService.js';
 
 const SALT_ROUNDS = 10;
 
@@ -70,11 +72,36 @@ export async function loginUser(request, response) {
     throw new ApiError(401, 'Invalid email or password.');
   }
 
+  const token = createAccessToken(user);
+
   return response.status(200).json({
     success: true,
     message: 'Login successful.',
     data: {
       user: toPublicUser(user),
+      token,
+      tokenType: 'Bearer',
+      expiresIn: env.jwt.expiresIn,
+    },
+  });
+}
+
+export function getAuthenticatedProfile(request, response) {
+  return response.status(200).json({
+    success: true,
+    message: 'Authenticated user profile retrieved successfully.',
+    data: {
+      user: request.user,
+    },
+  });
+}
+
+export function getAdminTest(request, response) {
+  return response.status(200).json({
+    success: true,
+    message: 'Admin access confirmed.',
+    data: {
+      user: request.user,
     },
   });
 }
