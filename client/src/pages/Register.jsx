@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import AuthPage from '../components/AuthPage.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import PasswordField from '../components/PasswordField.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import {
   validateEmail,
+  validateFullName,
   validatePassword,
   validatePasswordConfirmation,
-  validateRequired,
+  validateRegistrationRole,
 } from '../utils/authValidation.js';
+import {
+  getApiErrorMessage,
+  getApiValidationErrors,
+} from '../utils/getApiErrorMessage.js';
 import {
   sanitizeDigits,
   sanitizeFullName,
@@ -24,22 +30,21 @@ const initialValues = {
 };
 
 function Register() {
+  const navigate = useNavigate();
+  const { isAuthenticated, isRestoring, register } = useAuth();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const submitTimer = useRef(null);
-
-  useEffect(() => () => window.clearTimeout(submitTimer.current), []);
+  const [submitError, setSubmitError] = useState('');
 
   function getFieldError(name, value, currentValues = values) {
-    if (name === 'fullName') return validateRequired(value, 'Full name');
+    if (name === 'fullName') return validateFullName(value);
     if (name === 'email') return validateEmail(value);
     if (name === 'password') return validatePassword(value);
     if (name === 'confirmPassword') {
       return validatePasswordConfirmation(value, currentValues.password);
     }
-    if (name === 'role') return value ? '' : 'Select an account type.';
+    if (name === 'role') return validateRegistrationRole(value);
     return '';
   }
 
@@ -52,11 +57,13 @@ function Register() {
         : value;
     const nextValues = { ...values, [name]: nextValue };
     setValues(nextValues);
-    setSubmitMessage('');
+    setSubmitError('');
 
     setErrors((current) => {
       const nextErrors = { ...current };
-      if (current[name]) nextErrors[name] = getFieldError(name, value, nextValues);
+      if (current[name]) {
+        nextErrors[name] = getFieldError(name, nextValue, nextValues);
+      }
       if (name === 'password' && current.confirmPassword) {
         nextErrors.confirmPassword = getFieldError(
           'confirmPassword',
@@ -76,8 +83,12 @@ function Register() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     const nextErrors = Object.keys(values).reduce((result, name) => ({
       ...result,
@@ -85,17 +96,41 @@ function Register() {
     }), {});
 
     setErrors(nextErrors);
-    setSubmitMessage('');
+    setSubmitError('');
 
     if (Object.values(nextErrors).some(Boolean)) return;
 
     setIsSubmitting(true);
-    submitTimer.current = window.setTimeout(() => {
+
+    try {
+      const result = await register({
+        fullName: values.fullName.trim(),
+        email: values.email.trim(),
+        phone: values.phone || undefined,
+        role: values.role,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
+      });
+
+      navigate('/login', {
+        replace: true,
+        state: {
+          successMessage: `${result.message} Please sign in with your new account.`,
+        },
+      });
+    } catch (error) {
+      setErrors((current) => ({
+        ...current,
+        ...getApiValidationErrors(error),
+      }));
+      setSubmitError(getApiErrorMessage(error));
+    } finally {
       setIsSubmitting(false);
-      setSubmitMessage(
-        'Your details passed frontend validation. Secure registration will be connected in Phase 2.',
-      );
-    }, 900);
+    }
+  }
+
+  if (!isRestoring && isAuthenticated) {
+    return <Navigate replace to="/profile" />;
   }
 
   return (
@@ -127,6 +162,8 @@ function Register() {
               autoComplete="name"
               className={`form-control form-control-lg${errors.fullName ? ' is-invalid' : ''}`}
               id="registerName"
+              disabled={isSubmitting}
+              maxLength={120}
               name="fullName"
               onBlur={handleBlur}
               onChange={handleChange}
@@ -148,6 +185,8 @@ function Register() {
               autoComplete="email"
               className={`form-control form-control-lg${errors.email ? ' is-invalid' : ''}`}
               id="registerEmail"
+              disabled={isSubmitting}
+              maxLength={190}
               name="email"
               onBlur={handleBlur}
               onChange={handleChange}
@@ -169,6 +208,7 @@ function Register() {
               className="form-control form-control-lg"
               id="registerPhone"
               name="phone"
+              disabled={isSubmitting}
               onChange={handleChange}
               inputMode="numeric"
               maxLength={15}
@@ -187,6 +227,7 @@ function Register() {
               className={`form-select form-select-lg${errors.role ? ' is-invalid' : ''}`}
               id="registerRole"
               name="role"
+              disabled={isSubmitting}
               onBlur={handleBlur}
               onChange={handleChange}
               value={values.role}
@@ -210,6 +251,7 @@ function Register() {
               id="registerPassword"
               label="Password"
               name="password"
+              disabled={isSubmitting}
               onBlur={handleBlur}
               onChange={handleChange}
               placeholder="At least 8 characters"
@@ -224,6 +266,7 @@ function Register() {
               id="registerPasswordConfirm"
               label="Confirm password"
               name="confirmPassword"
+              disabled={isSubmitting}
               onBlur={handleBlur}
               onChange={handleChange}
               placeholder="Repeat your password"
@@ -231,17 +274,21 @@ function Register() {
             />
           </div>
 
-          {submitMessage && (
+          {submitError && (
             <div className="col-12">
-              <div className="alert alert-success auth-submit-message mb-0" role="status">
-                <i className="bi bi-check-circle-fill" aria-hidden="true" />
-                <span>{submitMessage}</span>
+              <div className="alert alert-danger auth-submit-message mb-0" role="alert">
+                <i className="bi bi-exclamation-circle-fill" aria-hidden="true" />
+                <span>{submitError}</span>
               </div>
             </div>
           )}
 
           <div className="col-12 mt-4">
-            <button className="btn btn-brand btn-lg w-100" disabled={isSubmitting} type="submit">
+            <button
+              className="btn btn-brand btn-lg w-100"
+              disabled={isSubmitting || isRestoring}
+              type="submit"
+            >
               {isSubmitting ? <LoadingSpinner label="Creating account..." /> : 'Create account'}
             </button>
           </div>

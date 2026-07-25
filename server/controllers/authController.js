@@ -96,6 +96,16 @@ export function getAuthenticatedProfile(request, response) {
   });
 }
 
+export function getOwnerTest(request, response) {
+  return response.status(200).json({
+    success: true,
+    message: 'Property owner access confirmed.',
+    data: {
+      user: request.user,
+    },
+  });
+}
+
 export function getAdminTest(request, response) {
   return response.status(200).json({
     success: true,

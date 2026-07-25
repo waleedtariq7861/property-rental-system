@@ -1,9 +1,11 @@
 -- RentEase development seed data
 -- Run schema.sql first. These records are fictional and for local development only.
 --
--- Every sample account uses the same pre-generated bcrypt hash. Its plaintext is
--- intentionally not published because Phase 1 has no authentication workflow.
--- In Phase 2, replace these hashes through the secure password creation/reset flow.
+-- Every sample account uses the same non-production bcrypt placeholder hash.
+-- No plaintext password or private credential is stored in this file. These
+-- records are display fixtures, not login credentials. To create a test admin,
+-- register normally so bcrypt hashes the chosen password, then promote that
+-- local account with the safe SQL procedure documented in README.md.
 
 USE rentease_db;
 

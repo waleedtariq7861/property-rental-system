@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const navigationItems = [
   { label: 'Home', to: '/' },
@@ -10,6 +11,8 @@ const navigationItems = [
 
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, isAuthenticated, isRestoring, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(location.pathname !== '/');
 
   useEffect(() => {
@@ -24,6 +27,11 @@ function Navbar() {
 
   const navLinkClass = ({ isActive }) =>
     `nav-link px-lg-3${isActive ? ' active' : ''}`;
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <nav className={`navbar navbar-dark navbar-expand-lg sticky-top site-navbar${isScrolled ? ' is-scrolled' : ' is-hero'}`}>
@@ -56,16 +64,39 @@ function Navbar() {
                 </NavLink>
               </li>
             ))}
-            <li className="nav-item ms-lg-2">
-              <NavLink className="nav-link" to="/login">
-                Login
-              </NavLink>
-            </li>
-            <li className="nav-item ms-lg-1 mt-2 mt-lg-0">
-              <NavLink className="btn btn-brand-light px-3" to="/register">
-                Register
-              </NavLink>
-            </li>
+            {!isRestoring && isAuthenticated ? (
+              <>
+                <li className="nav-item ms-lg-2">
+                  <NavLink className="nav-link" to="/profile">
+                    {currentUser.fullName}
+                  </NavLink>
+                </li>
+                <li className="nav-item ms-lg-1 mt-2 mt-lg-0">
+                  <button
+                    className={`btn px-3 ${
+                      isScrolled ? 'btn-outline-brand' : 'btn-brand-light'
+                    }`}
+                    onClick={handleLogout}
+                    type="button"
+                  >
+                    Log out
+                  </button>
+                </li>
+              </>
+            ) : !isRestoring ? (
+              <>
+                <li className="nav-item ms-lg-2">
+                  <NavLink className="nav-link" to="/login">
+                    Login
+                  </NavLink>
+                </li>
+                <li className="nav-item ms-lg-1 mt-2 mt-lg-0">
+                  <NavLink className="btn btn-brand-light px-3" to="/register">
+                    Register
+                  </NavLink>
+                </li>
+              </>
+            ) : null}
           </ul>
         </div>
       </div>

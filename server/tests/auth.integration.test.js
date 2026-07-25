@@ -16,9 +16,11 @@ const [{ default: app }, { default: pool }] = await Promise.all([
 
 const testId = `${Date.now()}-${process.pid}`;
 const tenantEmail = `jwt.tenant.${testId}@rentease.test`;
+const ownerEmail = `jwt.owner.${testId}@rentease.test`;
 const adminEmail = `jwt.admin.${testId}@rentease.test`;
 const password = 'SecurePass123!';
 let tenantToken;
+let ownerToken;
 let adminToken;
 
 describe('JWT authentication and role authorization', { concurrency: false }, () => {
@@ -28,16 +30,25 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
     await pool.execute(
       `
         INSERT INTO users (full_name, email, password_hash, role)
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?), (?, ?, ?, ?)
       `,
-      ['JWT Test Admin', adminEmail, passwordHash, 'admin'],
+      [
+        'JWT Test Owner',
+        ownerEmail,
+        passwordHash,
+        'owner',
+        'JWT Test Admin',
+        adminEmail,
+        passwordHash,
+        'admin',
+      ],
     );
   });
 
   after(async () => {
     await pool.execute(
-      'DELETE FROM users WHERE email IN (?, ?)',
-      [tenantEmail, adminEmail],
+      'DELETE FROM users WHERE email IN (?, ?, ?)',
+      [tenantEmail, ownerEmail, adminEmail],
     );
     await pool.end();
   });
@@ -47,6 +58,7 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
       fullName: 'JWT Test Tenant',
       email: tenantEmail,
       password,
+      confirmPassword: password,
       role: 'tenant',
     });
 
@@ -56,6 +68,83 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
     assert.equal(response.body.data.user.role, 'tenant');
     assert.equal('password' in response.body.data.user, false);
     assert.equal('passwordHash' in response.body.data.user, false);
+  });
+
+  it('rejects duplicate email registration', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      fullName: 'Duplicate Tenant',
+      email: tenantEmail,
+      password,
+      confirmPassword: password,
+      role: 'tenant',
+    });
+
+    assert.equal(response.status, 409);
+    assert.equal(response.body.message, 'An account with this email already exists.');
+  });
+
+  it('rejects missing registration fields', async () => {
+    const response = await request(app).post('/api/auth/register').send({});
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.message, 'Validation failed');
+    assert.ok(response.body.details.fullName);
+    assert.ok(response.body.details.email);
+    assert.ok(response.body.details.password);
+    assert.ok(response.body.details.confirmPassword);
+    assert.ok(response.body.details.role);
+  });
+
+  it('rejects a registration with an invalid email', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      fullName: 'Invalid Email User',
+      email: 'not-an-email',
+      password,
+      confirmPassword: password,
+      role: 'tenant',
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.details.email, 'Enter a valid email address.');
+  });
+
+  it('rejects a short registration password', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      fullName: 'Short Password User',
+      email: `short.${testId}@rentease.test`,
+      password: 'short',
+      confirmPassword: 'short',
+      role: 'tenant',
+    });
+
+    assert.equal(response.status, 400);
+    assert.ok(response.body.details.password);
+  });
+
+  it('rejects mismatched password confirmation', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      fullName: 'Mismatch User',
+      email: `mismatch.${testId}@rentease.test`,
+      password,
+      confirmPassword: 'DifferentPass123!',
+      role: 'tenant',
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.details.confirmPassword, 'Passwords do not match.');
+  });
+
+  it('rejects public admin registration', async () => {
+    const response = await request(app).post('/api/auth/register').send({
+      fullName: 'Public Admin Attempt',
+      email: `public.admin.${testId}@rentease.test`,
+      password,
+      confirmPassword: password,
+      role: 'admin',
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.details.role, 'Select a valid user role.');
   });
 
   it('logs in and returns a valid JWT with safe claims', async () => {
@@ -77,6 +166,26 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
     assert.ok(decodedToken.userId);
     assert.equal('password' in decodedToken, false);
     assert.equal('passwordHash' in decodedToken, false);
+  });
+
+  it('rejects login with an incorrect password', async () => {
+    const response = await request(app).post('/api/auth/login').send({
+      email: tenantEmail,
+      password: 'IncorrectPass123!',
+    });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.message, 'Invalid email or password.');
+  });
+
+  it('rejects login for a non-existing user with the same safe message', async () => {
+    const response = await request(app).post('/api/auth/login').send({
+      email: `missing.${testId}@rentease.test`,
+      password,
+    });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.message, 'Invalid email or password.');
   });
 
   it('returns the safe profile for a valid Bearer token', async () => {
@@ -155,6 +264,36 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
       response.body.message,
       'You do not have permission to access this resource.',
     );
+  });
+
+  it('rejects a tenant from the owner-only route', async () => {
+    const response = await request(app)
+      .get('/api/auth/owner-test')
+      .set('Authorization', `Bearer ${tenantToken}`);
+
+    assert.equal(response.status, 403);
+    assert.equal(
+      response.body.message,
+      'You do not have permission to access this resource.',
+    );
+  });
+
+  it('allows a property owner to access the owner-only route', async () => {
+    const loginResponse = await request(app).post('/api/auth/login').send({
+      email: ownerEmail,
+      password,
+    });
+
+    assert.equal(loginResponse.status, 200);
+    ownerToken = loginResponse.body.data.token;
+
+    const response = await request(app)
+      .get('/api/auth/owner-test')
+      .set('Authorization', `Bearer ${ownerToken}`);
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.message, 'Property owner access confirmed.');
+    assert.equal(response.body.data.user.role, 'owner');
   });
 
   it('allows an admin to access the admin-only route', async () => {

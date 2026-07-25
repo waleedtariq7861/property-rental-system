@@ -44,10 +44,11 @@ function AuthPage({
               </div>
 
               <div className="auth-phase-note" role="note">
-                <i className="bi bi-info-circle" aria-hidden="true" />
+                <i className="bi bi-shield-check" aria-hidden="true" />
                 <span>
-                  Phase 1 frontend preview. Your details are validated in the browser
-                  and are not sent to a server.
+                  Phase 1 secure account access is connected to the RentEase API.
+                  Passwords are sent only for authentication and are never stored
+                  in the browser.
                 </span>
               </div>
 

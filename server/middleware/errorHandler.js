@@ -14,10 +14,9 @@ function errorHandler(error, request, response, next) {
 
   const payload = {
     success: false,
-    message:
-      isServerError && env.isProduction
-        ? 'An unexpected server error occurred'
-        : error.message || 'An unexpected server error occurred',
+    message: isServerError
+      ? 'An unexpected server error occurred'
+      : error.message || 'An unexpected server error occurred',
     data: null,
   };
 

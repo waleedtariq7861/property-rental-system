@@ -1,97 +1,80 @@
 # RentEase – Smart Property Rental & Management System
 
-RentEase is a full-stack property rental platform designed to bring tenants,
-property owners, and administrators into one clear workflow. The project uses a
-React/Vite client, an Express API, and a normalized MySQL database.
+RentEase is a full-stack rental platform foundation for tenants, property
+owners, and administrators. Phase 1 / Module 1 delivers the project setup,
+MySQL user storage, secure registration and login, JWT authentication,
+role-based authorization, frontend session management, and protected routes.
 
-## Phase 1 status
+Property CRUD, rental requests, dashboards, favorites, and administrative
+management workflows are outside Phase 1 and are not implemented here.
 
-Phase 1 establishes the development foundation only. It includes a responsive
-public interface, client-side routing, backend health reporting, database
-connectivity, SQL schema and seed files, environment templates, and root
-development scripts.
+## Phase 1 features
 
-Authentication, dashboards, property CRUD, favorites, rental-request actions,
-file upload workflows, and administration are intentionally not implemented in
-this phase.
+- React/Vite client with responsive public, login, register, profile, and
+  authorization-test pages
+- Express API with consistent success and error responses
+- MySQL connection pool configured entirely through environment variables
+- Tenant and property-owner registration with server and client validation
+- bcrypt password hashing; plaintext passwords are never stored
+- Login with safe credential errors and JWT generation
+- Bearer-token authentication with missing, invalid, and expired-token handling
+- Reusable `tenant`, `owner`, and `admin` role authorization
+- Protected profile, owner-test, and admin-test API endpoints
+- Frontend auth context with login, registration, logout, token attachment, and
+  session restoration after refresh
+- Protected React routes with loading and unauthorized states
+- Automated backend integration coverage and manual browser test guidance
 
 ## Technology stack
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React, Vite, JavaScript, React Router DOM, Bootstrap 5, Bootstrap Icons, Axios |
-| Backend | Node.js, Express, JavaScript ES modules, MySQL2, dotenv, CORS |
-| Database | MySQL 8.0+ |
-| Development | npm, Nodemon, Concurrently |
-
-## Current features
-
-- Responsive Home, About, Contact, Login, Register, and Not Found pages
-- Shared navigation, footer, and loading components
-- React Router navigation with a common page layout
-- Phase 1 login and registration design previews with submission disabled
-- Reusable Axios client configured through `VITE_API_URL`
-- Homepage API/MySQL health indicator with loading, failure, and retry states
-- Express middleware for JSON, URL-encoded input, CORS, development logging,
-  static uploads, 404 responses, and global error handling
-- MySQL promise-based connection pool
-- Normalized schema for users, properties, images, favorites, rental requests,
-  and contact messages
-- Safe development seed data with bcrypt-formatted password hashes only
+| Frontend | React 19, Vite, React Router DOM, Axios, Bootstrap 5 |
+| Backend | Node.js, Express 5, JavaScript ES modules |
+| Authentication | bcrypt, JSON Web Token |
+| Database | MySQL 8.0+, MySQL2 promise API |
+| Development | npm, Nodemon, Concurrently, Node test runner, Supertest |
 
 ## Folder structure
 
 ```text
 project/
 ├── client/
-│   ├── public/
 │   ├── src/
-│   │   ├── api/                  # Shared Axios configuration
-│   │   ├── assets/               # Frontend images and other static imports
-│   │   ├── components/           # Reusable UI components
-│   │   ├── layouts/              # Shared page layouts
-│   │   ├── pages/                # Route-level page components
-│   │   ├── routes/               # React Router configuration
-│   │   ├── services/             # API-facing client services
-│   │   ├── utils/                # Small client helpers
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
+│   │   ├── api/             # Axios client and auth header handling
+│   │   ├── assets/          # Existing static images
+│   │   ├── components/      # Shared UI and route guards
+│   │   ├── context/         # Authentication state
+│   │   ├── layouts/         # Shared page layout
+│   │   ├── pages/           # Public and Phase 1 protected pages
+│   │   ├── routes/          # React Router configuration
+│   │   ├── services/        # Health and authentication API calls
+│   │   └── utils/           # Validation, storage, and error helpers
 │   ├── .env.example
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
+│   └── package.json
 ├── server/
-│   ├── config/                   # Environment and MySQL pool configuration
-│   ├── controllers/              # HTTP request handlers
-│   ├── database/                 # Schema and development seed SQL
-│   ├── middleware/               # Express request/response middleware
-│   ├── routes/                   # API route definitions
-│   ├── services/                 # Backend business/infrastructure services
-│   ├── uploads/                  # Future runtime uploads (ignored by Git)
-│   ├── utils/                    # Shared backend helpers
-│   ├── app.js                    # Express application setup
-│   ├── server.js                 # Network server and graceful shutdown
+│   ├── config/              # Environment and MySQL configuration
+│   ├── controllers/         # HTTP request handlers
+│   ├── database/            # SQL schema and safe development seed
+│   ├── middleware/          # JWT, role, error, and request middleware
+│   ├── routes/              # API route definitions
+│   ├── services/            # Database and token services
+│   ├── tests/               # Backend integration tests
+│   ├── utils/               # Validation and API helpers
 │   ├── .env.example
 │   └── package.json
 ├── .gitignore
-├── package.json                  # Root development commands
+├── package.json
 └── README.md
 ```
 
-Feature-specific models are deliberately deferred until their corresponding
-Phase 2 modules exist, which avoids empty abstractions in Phase 1.
-
 ## Prerequisites
 
-Install the following before starting:
+- Node.js 20.19 or newer
+- npm 10 or newer
+- MySQL Server 8.0 or newer
 
-- **Node.js 20.19 or newer** (Node.js 22 LTS is also suitable)
-- **npm 10 or newer**
-- **MySQL Server 8.0 or newer**
-- A terminal opened in the project root
-
-Check the installed versions:
+Verify local versions:
 
 ```bash
 node --version
@@ -101,13 +84,13 @@ mysql --version
 
 ## Installation
 
-From the project root, install root, client, and server packages together:
+From the project root:
 
 ```bash
 npm run install-all
 ```
 
-The equivalent manual commands are:
+Equivalent manual commands:
 
 ```bash
 npm install
@@ -117,14 +100,14 @@ npm install --prefix server
 
 ## Environment setup
 
-Create local environment files from the committed examples:
+Copy the safe templates:
 
 ```bash
 cp server/.env.example server/.env
 cp client/.env.example client/.env
 ```
 
-Update `server/.env` with the credentials for the local MySQL server:
+Configure `server/.env` locally:
 
 ```dotenv
 PORT=5000
@@ -134,61 +117,78 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_local_mysql_password
 DB_NAME=rentease_db
-JWT_SECRET=replace_with_a_long_secure_secret
+JWT_SECRET=replace_with_a_long_random_private_value
 JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:5173
+CLIENT_URL=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-The JWT values are reserved for Phase 2 and are not used by the Phase 1 API.
-Use a long, private value now if a local `.env` is created. Never commit `.env`
-files.
-
-The client setting should normally remain:
+Configure `client/.env`:
 
 ```dotenv
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://127.0.0.1:5000/api
 ```
 
-Restart Vite after changing a client environment value.
+The frontend API URL must use the backend's actual `PORT`. Restart Vite after
+changing client environment values. Actual `.env` files are ignored by Git.
+Never commit database passwords, JWT secrets, or issued JWT tokens.
 
-## Database setup
+## MySQL database setup
 
-The schema creates `rentease_db` automatically. From the project root, run:
+Import the existing schema and optional development fixtures:
 
 ```bash
 mysql -u root -p < server/database/schema.sql
 mysql -u root -p < server/database/seed.sql
 ```
 
-If the MySQL account has no password, omit `-p`:
+If the local MySQL user has no password, omit `-p`.
 
-```bash
-mysql -u root < server/database/schema.sql
-mysql -u root < server/database/seed.sql
+The Phase 1 authentication table is `users`:
+
+| Column | Purpose |
+| --- | --- |
+| `id` | Unsigned auto-increment primary key |
+| `full_name` | User's display name, up to 120 characters |
+| `email` | Unique login email |
+| `phone` | Optional unique phone number retained by the existing project |
+| `password_hash` | bcrypt hash; plaintext is never stored |
+| `role` | `tenant`, `owner`, or `admin` |
+| `account_status` | Existing account lifecycle status |
+| `created_at` | Creation timestamp |
+| `updated_at` | Automatically updated timestamp |
+
+The existing schema also contains tables reserved for later modules. Phase 1
+authentication code reads and writes only the `users` table.
+
+The development seed contains fictional records and non-production placeholder
+bcrypt hashes. It contains no plaintext password and should not be treated as a
+source of login credentials.
+
+### Safely create a local admin account
+
+1. Register a new tenant or owner through the Register page or registration API.
+   This ensures bcrypt creates the password hash.
+2. Promote only that local test account in MySQL:
+
+```sql
+USE rentease_db;
+UPDATE users
+SET role = 'admin'
+WHERE email = 'phase1.admin@example.test';
 ```
 
-The seed is intended for local development. It creates one administrator, two
-owners, three tenants, and five properties. Seed accounts contain a pre-generated
-bcrypt hash, but no plaintext seed password is provided and Phase 1 has no login
-endpoint. Password creation and reset will be implemented securely in Phase 2.
+3. Log in with the password entered during registration.
 
-To confirm the import:
+Do not put an admin password, hash, database password, or JWT secret in
+`seed.sql`, README, source code, shell history, screenshots, or Git.
 
-```bash
-mysql -u root -p -e "USE rentease_db; SHOW TABLES; SELECT COUNT(*) AS users FROM users; SELECT COUNT(*) AS properties FROM properties;"
-```
+## Running RentEase
 
-## Running the application
-
-Run the frontend and backend together from the root:
+Run both applications from the project root:
 
 ```bash
 npm run dev
 ```
-
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:5000`
-- Health endpoint: `http://localhost:5000/api/health`
 
 Run only the frontend:
 
@@ -196,87 +196,194 @@ Run only the frontend:
 npm run client
 ```
 
-Run only the backend:
+Run only the backend with Nodemon:
 
 ```bash
 npm run server
 ```
 
-For a production frontend build:
-
-```bash
-npm run build
-```
-
-To run the backend without Nodemon:
+Run the backend without Nodemon:
 
 ```bash
 npm start
 ```
 
-## Health endpoint
+Default URLs:
 
-Request the endpoint in a browser or terminal:
+- Frontend: `http://127.0.0.1:5173`
+- Backend: `http://127.0.0.1:5000`
+- Health: `http://127.0.0.1:5000/api/health`
 
-```bash
-curl http://localhost:5000/api/health
+## Authentication API
+
+| Method | Endpoint | Access | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/auth/register` | Public | Register a tenant or owner |
+| `POST` | `/api/auth/login` | Public | Authenticate and receive a JWT |
+| `GET` | `/api/auth/profile` | Authenticated | Return the current safe user |
+| `GET` | `/api/auth/owner-test` | Owner | Verify owner authorization |
+| `GET` | `/api/auth/admin-test` | Admin | Verify admin authorization |
+| `GET` | `/api/health` | Public | Check API and database health |
+
+Authenticated requests use:
+
+```http
+Authorization: Bearer <jwt-token>
 ```
 
-With MySQL available, it returns HTTP `200`:
+### Registration request
+
+```json
+{
+  "fullName": "Amina Shah",
+  "email": "amina@example.test",
+  "password": "choose-a-private-password",
+  "confirmPassword": "choose-a-private-password",
+  "role": "tenant"
+}
+```
+
+Only `tenant` and `owner` may be registered publicly.
+
+### Login request
+
+```json
+{
+  "email": "amina@example.test",
+  "password": "choose-a-private-password"
+}
+```
+
+### Safe login response shape
 
 ```json
 {
   "success": true,
-  "message": "RentEase API is running",
+  "message": "Login successful.",
   "data": {
-    "database": "connected"
+    "user": {
+      "id": 7,
+      "fullName": "Amina Shah",
+      "email": "amina@example.test",
+      "role": "tenant"
+    },
+    "token": "<jwt-token>",
+    "tokenType": "Bearer",
+    "expiresIn": "7d"
   }
 }
 ```
 
-If the API is running but MySQL cannot be reached, it returns HTTP `503` with a
-safe message and `"database": "unavailable"`. This is expected until MySQL and
-`server/.env` are configured.
+The real API may include other safe existing profile fields, but never returns
+the plaintext password or `password_hash`. The JWT payload contains only
+`userId`, `email`, and `role`, plus standard `iat` and `exp` claims.
+
+## Frontend routes
+
+| Route | Access |
+| --- | --- |
+| `/` | Public |
+| `/login` | Public; authenticated users redirect to profile |
+| `/register` | Public; authenticated users redirect to profile |
+| `/profile` | Authenticated users |
+| `/owner-access` | Property owners |
+| `/admin-access` | Administrators |
+| `/unauthorized` | Public authorization message |
+
+The frontend stores the JWT and a minimal safe user object in local storage to
+restore login after refresh. It revalidates the token through the protected
+profile API. Logout is client-side: it clears the local authentication record
+and updates the React state; no fake backend logout endpoint is used.
+
+## Validation and error handling
+
+Registration validates:
+
+- required name, email, password, confirmation, and role
+- full-name length from 2 to 120 characters
+- email format
+- minimum password length of 8 characters
+- matching password confirmation
+- public roles limited to tenant and owner
+- duplicate email through both lookup and database uniqueness protection
+
+The API returns safe status codes:
+
+- `400` invalid input
+- `401` invalid credentials or missing/invalid/expired token
+- `403` insufficient role
+- `404` authenticated user no longer exists
+- `409` duplicate account
+- `500` unexpected server error with a generic client message
+- `503` database unavailable through the health endpoint
+
+## Testing
+
+Run all backend and frontend tests from the root:
+
+```bash
+npm test
+```
+
+Run an individual suite:
+
+```bash
+npm run test:server
+npm run test:client
+```
+
+Backend tests require the local MySQL server and imported `users` table.
+Temporary test users are removed after the suite. Frontend component tests use
+Vitest, Testing Library, and a browser-like test DOM; API service calls are
+mocked so validation, redirects, auth state, and logout remain deterministic.
+
+Build the frontend:
+
+```bash
+npm run build
+```
+
+There is currently no separate lint script. Automated component tests do not
+replace responsive and console checks in a real browser. For manual browser
+verification:
+
+1. Start MySQL and run `npm run dev`.
+2. Open `/register` and verify required, email, password, and confirmation errors.
+3. Register a unique tenant and confirm the redirect and success message.
+4. Log in and confirm the protected profile appears.
+5. Refresh `/profile` and confirm the authenticated session is restored.
+6. Open `/owner-access` as a tenant and confirm the unauthorized page.
+7. Log out and confirm `/profile` redirects to `/login`.
+8. Repeat with an owner and verify `/owner-access`.
+9. Check mobile, tablet, and desktop widths.
+10. Confirm the browser console has no relevant application errors.
 
 ## Common troubleshooting
 
-### The health endpoint reports that the database is unavailable
+### Database unavailable
 
-- Confirm the MySQL service is running.
-- Confirm `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` in
-  `server/.env`.
-- Import `schema.sql` before starting the API.
-- Confirm the selected MySQL user can access `rentease_db`.
+- Confirm MySQL is running.
+- Verify the `DB_*` values in `server/.env`.
+- Import `schema.sql`.
+- Confirm the selected database user can access `rentease_db`.
 
-### The browser reports a CORS error
+### CORS error
 
-Confirm `CLIENT_URL` exactly matches the Vite origin, including the port. Multiple
-allowed origins can be supplied as a comma-separated list.
+Ensure `CLIENT_URL` contains the exact browser origin, including protocol and
+port. The provided example supports both `localhost` and `127.0.0.1`.
 
-### Port 5000 or 5173 is already in use
+### Authentication requests reach the wrong port
 
-Stop the other process, or update `PORT` for the API. If the API port changes,
-also update `VITE_API_URL` and restart both processes.
+Make `VITE_API_URL` match the backend `PORT`, then restart Vite.
 
-### Environment changes do not appear
+### Missing JWT environment values
 
-Stop and restart the affected development server. Vite and dotenv read their
-environment at startup.
+Set both `JWT_SECRET` and `JWT_EXPIRES_IN` in the ignored `server/.env`. The API
+will not start without them.
 
-### Packages or imports cannot be resolved
+## Phase boundary
 
-Run `npm run install-all` from the project root. If a previous installation was
-interrupted, rerun the same command and review the first reported error.
-
-## Planned future modules
-
-- Secure registration, login, JWT authentication, and role authorization
-- Tenant, owner, and administrator dashboards
-- Property creation, editing, approval, search, filtering, and image uploads
-- Tenant favorites
-- Rental request submission, review, and status tracking
-- Contact-message submission and administration
-- Input validation, security hardening, automated tests, and deployment setup
-
-These modules belong to later phases and are not partially implemented in the
-Phase 1 codebase.
+Phase 1 is limited to setup and authentication. The existing placeholder
+property page and pre-existing future database tables remain untouched, but no
+property listing backend, rental request flow, dashboard, management interface,
+or other Phase 2/3 feature is implemented by this module.

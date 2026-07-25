@@ -1,9 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import AuthPage from '../components/AuthPage.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import PasswordField from '../components/PasswordField.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { validateEmail, validatePassword } from '../utils/authValidation.js';
+import {
+  getApiErrorMessage,
+  getApiValidationErrors,
+} from '../utils/getApiErrorMessage.js';
 
 const initialValues = {
   email: '',
@@ -11,13 +21,13 @@ const initialValues = {
 };
 
 function Login() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, isRestoring, login } = useAuth();
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const submitTimer = useRef(null);
-
-  useEffect(() => () => window.clearTimeout(submitTimer.current), []);
+  const [submitError, setSubmitError] = useState('');
 
   function getFieldError(name, value) {
     return name === 'email' ? validateEmail(value) : validatePassword(value);
@@ -26,7 +36,7 @@ function Login() {
   function handleChange(event) {
     const { name, value } = event.target;
     setValues((current) => ({ ...current, [name]: value }));
-    setSubmitMessage('');
+    setSubmitError('');
 
     if (errors[name]) {
       setErrors((current) => ({
@@ -44,8 +54,12 @@ function Login() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     const nextErrors = {
       email: validateEmail(values.email),
@@ -53,17 +67,39 @@ function Login() {
     };
 
     setErrors(nextErrors);
-    setSubmitMessage('');
+    setSubmitError('');
 
     if (Object.values(nextErrors).some(Boolean)) return;
 
     setIsSubmitting(true);
-    submitTimer.current = window.setTimeout(() => {
+
+    try {
+      await login({
+        email: values.email.trim(),
+        password: values.password,
+      });
+
+      const requestedPath =
+        typeof location.state?.from === 'string' ? location.state.from : '/profile';
+      const destination = requestedPath === '/login' ? '/profile' : requestedPath;
+
+      navigate(destination, {
+        replace: true,
+        state: { successMessage: 'Login successful. Welcome back to RentEase.' },
+      });
+    } catch (error) {
+      setErrors((current) => ({
+        ...current,
+        ...getApiValidationErrors(error),
+      }));
+      setSubmitError(getApiErrorMessage(error));
+    } finally {
       setIsSubmitting(false);
-      setSubmitMessage(
-        'Your details passed frontend validation. Secure sign in will be connected in Phase 2.',
-      );
-    }, 900);
+    }
+  }
+
+  if (!isRestoring && isAuthenticated) {
+    return <Navigate replace to="/profile" />;
   }
 
   return (
@@ -95,6 +131,7 @@ function Login() {
             className={`form-control form-control-lg${errors.email ? ' is-invalid' : ''}`}
             id="loginEmail"
             name="email"
+            disabled={isSubmitting}
             onBlur={handleBlur}
             onChange={handleChange}
             placeholder="name@example.com"
@@ -113,6 +150,7 @@ function Login() {
             id="loginPassword"
             label="Password"
             name="password"
+            disabled={isSubmitting}
             onBlur={handleBlur}
             onChange={handleChange}
             placeholder="Enter your password"
@@ -120,14 +158,25 @@ function Login() {
           />
         </div>
 
-        {submitMessage && (
+        {location.state?.successMessage && !submitError && (
           <div className="alert alert-success auth-submit-message" role="status">
             <i className="bi bi-check-circle-fill" aria-hidden="true" />
-            <span>{submitMessage}</span>
+            <span>{location.state.successMessage}</span>
           </div>
         )}
 
-        <button className="btn btn-brand btn-lg w-100" disabled={isSubmitting} type="submit">
+        {submitError && (
+          <div className="alert alert-danger auth-submit-message" role="alert">
+            <i className="bi bi-exclamation-circle-fill" aria-hidden="true" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
+        <button
+          className="btn btn-brand btn-lg w-100"
+          disabled={isSubmitting || isRestoring}
+          type="submit"
+        >
           {isSubmitting ? <LoadingSpinner label="Signing in..." /> : 'Sign in'}
         </button>
       </form>

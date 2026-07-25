@@ -3,5 +3,5 @@ export function sanitizeDigits(value) {
 }
 
 export function sanitizeFullName(value) {
-  return value.replace(/[^a-zA-Z\s'-]/g, '');
+  return value.replace(/[^\p{L}\p{M}\s'-]/gu, '');
 }

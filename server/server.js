@@ -2,10 +2,8 @@ import app from './app.js';
 import pool from './config/database.js';
 import env from './config/env.js';
 
-const server = app.listen(env.port, (error) => {
-  if (!error) {
-    console.log(`RentEase API listening on http://localhost:${env.port}`);
-  }
+const server = app.listen(env.port, () => {
+  console.log(`RentEase API listening on http://localhost:${env.port}`);
 });
 
 let isShuttingDown = false;
