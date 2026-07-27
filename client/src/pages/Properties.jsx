@@ -1,73 +1,130 @@
-import { Link, useSearchParams } from 'react-router-dom';
-
-const temporaryNotes = [
-  'Property cards, filters, and backend search will be added in the next module.',
-  'This page is a temporary destination for the homepage search and navigation link.',
-  'The existing API and database foundation stay unchanged in Phase 1.',
-];
+import { useEffect, useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import PropertyCard from '../components/PropertyCard.jsx';
+import { getProperties } from '../services/propertyService.js';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
 
 function Properties() {
-  const [searchParams] = useSearchParams();
-  const activeFilters = [
-    ['City', searchParams.get('city')],
-    ['Property Type', searchParams.get('propertyType')],
-    ['Minimum Rent', searchParams.get('minRent')],
-    ['Maximum Rent', searchParams.get('maxRent')],
-  ].filter(([, value]) => value);
+  const [properties, setProperties] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [requestKey, setRequestKey] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadProperties() {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      try {
+        const result = await getProperties({ signal: controller.signal });
+        const nextProperties = result.data?.properties;
+
+        if (!Array.isArray(nextProperties)) {
+          throw new TypeError('The property response is not in the expected format.');
+        }
+
+        setProperties(nextProperties);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setProperties([]);
+        setErrorMessage(
+          error instanceof TypeError
+            ? 'Property data could not be loaded. Please try again shortly.'
+            : getApiErrorMessage(error),
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProperties();
+
+    return () => controller.abort();
+  }, [requestKey]);
 
   return (
-    <section className="page-shell section-space">
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-lg-10">
-            <div className="content-card">
-              <span className="section-label">Properties</span>
-              <h1 className="display-6 fw-bold mt-2 mb-3">
-                Property browsing module is being prepared
+    <div className="page-shell properties-page">
+      <section className="properties-heading-section">
+        <div className="container">
+          <div className="properties-heading-content">
+            <div>
+              <span className="section-label">Available rentals</span>
+              <h1 className="display-5 fw-bold mt-2 mb-3">
+                Find a place that feels right
               </h1>
-              <p className="section-intro mb-4">
-                RentEase will soon show a searchable property listing experience
-                here. For now, this route keeps the navigation and search flow
-                working without breaking the Phase 1 foundation.
+              <p className="section-intro mb-0">
+                Explore verified rental opportunities across Pakistan, with the
+                essential details you need to compare your options confidently.
               </p>
-
-              {activeFilters.length > 0 && (
-                <div className="filters-card mb-4">
-                  <h2 className="h5 mb-3">Your selected search filters</h2>
-                  <div className="d-flex flex-wrap gap-2">
-                    {activeFilters.map(([label, value]) => (
-                      <span className="filter-chip" key={label}>
-                        <strong>{label}:</strong> {value}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="row g-3">
-                {temporaryNotes.map((note) => (
-                  <div className="col-md-4" key={note}>
-                    <div className="info-tile h-100">
-                      <i className="bi bi-info-circle-fill" aria-hidden="true" />
-                      <p className="mb-0">{note}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="d-flex flex-wrap gap-3 mt-4">
-                <Link className="btn btn-brand" to="/">
-                  Back to home
-                </Link>
-                <Link className="btn btn-outline-brand" to="/register">
-                  List your property
-                </Link>
-              </div>
             </div>
+
+            {!isLoading && !errorMessage && properties.length > 0 && (
+              <div className="property-result-count" aria-live="polite">
+                <strong>{properties.length}</strong>
+                <span>{properties.length === 1 ? 'property' : 'properties'} available</span>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section className="properties-grid-section">
+        <div className="container">
+          {isLoading && (
+            <div className="property-state-card" aria-live="polite">
+              <LoadingSpinner label="Loading properties..." />
+              <p className="mb-0">Finding the latest available rentals for you.</p>
+            </div>
+          )}
+
+          {!isLoading && errorMessage && (
+            <div className="property-state-card property-error-state" role="alert">
+              <span className="property-state-icon" aria-hidden="true">
+                <i className="bi bi-exclamation-triangle" />
+              </span>
+              <h2 className="h4">We could not load the properties</h2>
+              <p>{errorMessage}</p>
+              <button
+                className="btn btn-brand"
+                type="button"
+                onClick={() => setRequestKey((currentKey) => currentKey + 1)}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !errorMessage && properties.length === 0 && (
+            <div className="property-state-card">
+              <span className="property-state-icon" aria-hidden="true">
+                <i className="bi bi-house-heart" />
+              </span>
+              <h2 className="h4">No properties are available right now</h2>
+              <p className="mb-0">
+                New listings are added regularly. Please check back again soon.
+              </p>
+            </div>
+          )}
+
+          {!isLoading && !errorMessage && properties.length > 0 && (
+            <div className="row g-4">
+              {properties.map((property) => (
+                <div className="col-md-6 col-xl-4" key={property.id}>
+                  <PropertyCard property={property} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 

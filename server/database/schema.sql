@@ -28,9 +28,18 @@ CREATE TABLE IF NOT EXISTS properties (
   owner_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(180) NOT NULL,
   description TEXT NOT NULL,
-  property_type ENUM('apartment', 'house', 'portion', 'room', 'office', 'shop') NOT NULL,
+  property_type ENUM(
+    'apartment',
+    'house',
+    'villa',
+    'office',
+    'studio',
+    'portion',
+    'room',
+    'shop'
+  ) NOT NULL,
   property_category ENUM('residential', 'commercial') NOT NULL DEFAULT 'residential',
-  monthly_rent DECIMAL(12, 2) UNSIGNED NOT NULL,
+  price DECIMAL(12, 2) UNSIGNED NOT NULL,
   security_deposit DECIMAL(12, 2) UNSIGNED NOT NULL DEFAULT 0.00,
   city VARCHAR(100) NOT NULL,
   area VARCHAR(120) NOT NULL,
@@ -43,19 +52,20 @@ CREATE TABLE IF NOT EXISTS properties (
   parking_available BOOLEAN NOT NULL DEFAULT FALSE,
   availability_status ENUM('available', 'rented', 'unavailable') NOT NULL DEFAULT 'available',
   approval_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
-  main_image VARCHAR(500) NULL,
+  image_url VARCHAR(500) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_properties_owner (owner_id),
   KEY idx_properties_location (city, area),
   KEY idx_properties_discovery (approval_status, availability_status, property_category),
-  KEY idx_properties_monthly_rent (monthly_rent),
+  KEY idx_properties_available_newest (approval_status, availability_status, created_at),
+  KEY idx_properties_price (price),
   CONSTRAINT fk_properties_owner
     FOREIGN KEY (owner_id) REFERENCES users (id)
     ON UPDATE CASCADE
     ON DELETE RESTRICT,
-  CONSTRAINT chk_properties_monthly_rent CHECK (monthly_rent > 0),
+  CONSTRAINT chk_properties_price CHECK (price > 0),
   CONSTRAINT chk_properties_bathrooms CHECK (bathrooms >= 0)
 ) ENGINE=InnoDB;
 

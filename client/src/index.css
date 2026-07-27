@@ -582,6 +582,264 @@ select:focus-visible {
   flex: 1;
 }
 
+.properties-page {
+  background:
+    radial-gradient(circle at 92% 5%, rgba(79, 154, 110, 0.1), transparent 24rem),
+    #f7f9f7;
+}
+
+.properties-heading-section {
+  padding: 5rem 0 3.25rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.properties-heading-content {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.properties-heading-content h1 {
+  color: var(--brand-950);
+  letter-spacing: -0.045em;
+}
+
+.property-result-count {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 9rem;
+  flex-direction: column;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(45, 106, 79, 0.16);
+  border-radius: 1rem;
+  background: #f1f7f3;
+  color: var(--brand-800);
+}
+
+.property-result-count strong {
+  font-size: 1.65rem;
+  line-height: 1.15;
+}
+
+.property-result-count span {
+  color: #527060;
+  font-size: 0.83rem;
+  font-weight: 650;
+}
+
+.properties-grid-section {
+  min-height: 32rem;
+  padding: 3.5rem 0 5.5rem;
+}
+
+.property-listing-card {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 0.8rem 2.2rem rgba(15, 23, 42, 0.055);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.property-listing-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(212, 164, 75, 0.45);
+  box-shadow: 0 1.15rem 2.5rem rgba(15, 23, 42, 0.09);
+}
+
+.property-listing-image-wrap {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #dfe8e2;
+}
+
+.property-listing-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 260ms ease;
+}
+
+.property-listing-card:hover .property-listing-image {
+  transform: scale(1.035);
+}
+
+.property-type-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.42rem 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(15, 61, 46, 0.9);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.035em;
+  backdrop-filter: blur(8px);
+}
+
+.property-listing-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+
+.property-listing-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.property-listing-heading h2 {
+  color: var(--brand-950);
+  line-height: 1.35;
+}
+
+.property-listing-city {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--brand-700);
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.property-listing-price {
+  flex: 0 0 auto;
+  color: var(--brand-800);
+  font-size: 1rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.property-listing-price span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.property-listing-address {
+  display: flex;
+  gap: 0.55rem;
+  min-height: 3.25rem;
+  padding: 1rem 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.property-listing-address i {
+  margin-top: 0.15rem;
+  color: var(--brand-500);
+}
+
+.property-listing-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: #f8faf9;
+}
+
+.property-listing-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #3f5148;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.property-listing-meta i {
+  color: var(--brand-700);
+  font-size: 1rem;
+}
+
+.property-listing-details {
+  padding: 0 0.2rem 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.property-details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.property-state-card {
+  display: flex;
+  max-width: 680px;
+  min-height: 19rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2.5rem;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: #fff;
+  color: var(--muted);
+  text-align: center;
+  box-shadow: 0 0.8rem 2rem rgba(15, 23, 42, 0.05);
+}
+
+.property-state-card .spinner-border {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--brand-700);
+}
+
+.property-state-card [role="status"] {
+  flex-direction: column;
+  color: var(--brand-800);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.property-state-card > p {
+  max-width: 30rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.65;
+}
+
+.property-state-icon {
+  display: inline-grid;
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 0.25rem;
+  place-items: center;
+  border-radius: 1.15rem;
+  background: var(--brand-100);
+  color: var(--brand-800);
+  font-size: 1.7rem;
+}
+
+.property-error-state .property-state-icon {
+  background: #fff4e5;
+  color: #a15c00;
+}
+
 .filters-card,
 .status-list {
   padding: 1rem;
@@ -1105,6 +1363,10 @@ select:focus-visible {
     align-items: flex-start;
   }
 
+  .properties-heading-section {
+    padding-top: 4rem;
+  }
+
   .auth-container {
     padding-top: 3.5rem;
     padding-bottom: 3.5rem;
@@ -1149,6 +1411,15 @@ select:focus-visible {
   .col-xl-2-4 {
     width: 50%;
   }
+
+  .properties-heading-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .property-result-count {
+    width: 100%;
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -1176,6 +1447,27 @@ select:focus-visible {
   .search-panel,
   .dev-status-banner {
     border-radius: 1rem;
+  }
+
+  .properties-heading-section {
+    padding: 3.5rem 0 2.5rem;
+  }
+
+  .properties-grid-section {
+    padding: 2.5rem 0 4.25rem;
+  }
+
+  .property-listing-body {
+    padding: 1.25rem;
+  }
+
+  .property-listing-heading {
+    flex-direction: column;
+  }
+
+  .property-listing-price span {
+    display: inline;
+    margin-left: 0.25rem;
   }
 
   .hero-inner {

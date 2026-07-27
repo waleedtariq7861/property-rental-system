@@ -1,7 +1,8 @@
 # RentEase – Smart Property Rental & Management System
 
 RentEase is a full-stack property rental project for tenants, property owners,
-and administrators. Phase 1 focuses on project setup and secure authentication.
+and administrators. Phase 1 established secure authentication, and Phase 2 Day
+1 adds public property listings.
 
 ## Phase 1 Features
 
@@ -16,8 +17,15 @@ and administrators. Phase 1 focuses on project setup and secure authentication.
 - MySQL database integration
 - Backend and frontend tests
 
-Property management, rental requests, and dashboards will be developed in later
-phases.
+## Phase 2 Day 1 Features
+
+- Public property listing and single-property REST APIs
+- MySQL property schema migration and realistic seed listings
+- Responsive property cards with loading, empty, and error states
+- Axios-powered property data loading at `/properties`
+
+Search, filters, property management, rental requests, and dashboards remain
+reserved for later Phase 2 work.
 
 ## Technology Stack
 
@@ -111,6 +119,14 @@ Optional development data:
 mysql -u root -p < server/database/seed.sql
 ```
 
+When upgrading an existing Phase 1 database, run the Day 1 migration before
+seeding:
+
+```bash
+mysql -u root -p < server/database/phase2_day1.sql
+mysql -u root -p < server/database/seed.sql
+```
+
 The `users` table stores the user's name, email, bcrypt password hash, role, and
 timestamps. Supported roles are `tenant`, `owner`, and `admin`.
 
@@ -158,6 +174,15 @@ Protected requests use:
 Authorization: Bearer <jwt-token>
 ```
 
+## Property Listings API
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| GET | `/api/properties` | Public |
+| GET | `/api/properties/:id` | Public |
+
+The list endpoint returns approved, available properties ordered newest first.
+
 ## Testing
 
 Run all tests:
@@ -183,8 +208,8 @@ Current test coverage includes registration, login, JWT validation, protected
 routes, role authorization, frontend validation, session restoration, and
 logout.
 
-## Phase 1 Scope
+## Current Scope
 
-Phase 1 includes project setup and authentication only. Property CRUD, rental
-requests, favorites, and tenant, owner, or admin dashboards are not included
-yet.
+Authentication and Phase 2 Day 1 read-only property listings are included.
+Search, filters, property CRUD, rental requests, favorites, and tenant, owner,
+or admin dashboards are not included yet.
