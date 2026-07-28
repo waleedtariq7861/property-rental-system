@@ -7,6 +7,7 @@ import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
 import NotFound from '../pages/NotFound.jsx';
 import Properties from '../pages/Properties.jsx';
+import PropertyDetails from '../pages/PropertyDetails.jsx';
 import Profile from '../pages/Profile.jsx';
 import Register from '../pages/Register.jsx';
 import RoleAccess from '../pages/RoleAccess.jsx';
@@ -21,6 +22,7 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route index element={<Home />} />
         <Route path="properties" element={<Properties />} />
+        <Route path="properties/:id" element={<PropertyDetails />} />
         <Route path="about" element={<About />} />
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<Login />} />

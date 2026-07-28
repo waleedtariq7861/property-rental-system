@@ -1,8 +1,8 @@
 # RentEase – Smart Property Rental & Management System
 
 RentEase is a full-stack property rental project for tenants, property owners,
-and administrators. Phase 1 established secure authentication, and Phase 2 Day
-1 adds public property listings.
+and administrators. Phase 1 established secure authentication, while Phase 2
+Days 1–2 add public property discovery and complete listing details.
 
 ## Phase 1 Features
 
@@ -24,8 +24,17 @@ and administrators. Phase 1 established secure authentication, and Phase 2 Day
 - Responsive property cards with loading, empty, and error states
 - Axios-powered property data loading at `/properties`
 
-Search, filters, property management, rental requests, and dashboards remain
-reserved for later Phase 2 work.
+## Phase 2 Day 2 Features
+
+- Real-time property search by title, city, or address
+- Combined city, property type, price range, and bedroom filters
+- Newest, oldest, and price-based sorting
+- Server-side pagination with preserved discovery criteria
+- Responsive property details at `/properties/:id`
+- Loading, empty, error, and property-specific 404 states
+
+Property management, rental requests, favorites, and dashboards remain reserved
+for later Phase 2 work.
 
 ## Technology Stack
 
@@ -181,7 +190,22 @@ Authorization: Bearer <jwt-token>
 | GET | `/api/properties` | Public |
 | GET | `/api/properties/:id` | Public |
 
-The list endpoint returns approved, available properties ordered newest first.
+The list endpoint returns approved, available properties and accepts these
+optional query parameters:
+
+| Parameter | Values |
+| --- | --- |
+| `search` | Property title, city, or address text |
+| `city` | Exact city name, case-insensitive |
+| `propertyType` | `apartment`, `house`, `villa`, `office`, `studio`, `portion`, `room`, or `shop` |
+| `minPrice` / `maxPrice` | Non-negative monthly price |
+| `bedrooms` | Exact non-negative bedroom count |
+| `sort` | `newest`, `oldest`, `price_asc`, or `price_desc` |
+| `page` | Positive page number |
+| `limit` | Results per page, from 1 to 60 |
+
+List responses include `properties`, the current-page `count`, `totalCount`,
+`currentPage`, and `totalPages`.
 
 ## Testing
 
@@ -205,11 +229,11 @@ npm run build
 ```
 
 Current test coverage includes registration, login, JWT validation, protected
-routes, role authorization, frontend validation, session restoration, and
-logout.
+routes, role authorization, frontend validation, session restoration, logout,
+property discovery queries, pagination, and property details.
 
 ## Current Scope
 
-Authentication and Phase 2 Day 1 read-only property listings are included.
-Search, filters, property CRUD, rental requests, favorites, and tenant, owner,
-or admin dashboards are not included yet.
+Authentication and Phase 2 Days 1–2 read-only property discovery are included.
+Property CRUD, rental requests, favorites, and tenant, owner, or admin
+dashboards are not included yet.

@@ -3,17 +3,24 @@ import {
   findAvailablePropertyById,
 } from '../services/propertyService.js';
 import ApiError from '../utils/ApiError.js';
-import { validatePropertyId } from '../utils/propertyValidation.js';
+import {
+  validatePropertyId,
+  validatePropertyQuery,
+} from '../utils/propertyValidation.js';
 
 export async function getProperties(request, response) {
-  const properties = await findAllAvailableProperties();
+  const query = validatePropertyQuery(request.query);
+  const result = await findAllAvailableProperties(query);
 
   return response.status(200).json({
     success: true,
     message: 'Properties retrieved successfully.',
     data: {
-      properties,
-      count: properties.length,
+      properties: result.properties,
+      count: result.properties.length,
+      totalCount: result.totalCount,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
     },
   });
 }

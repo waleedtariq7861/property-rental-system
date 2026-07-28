@@ -166,6 +166,9 @@ describe('Property listing API', { concurrency: false }, () => {
     assert.equal(response.body.message, 'Properties retrieved successfully.');
     assert.ok(Array.isArray(response.body.data.properties));
     assert.equal(response.body.data.count, response.body.data.properties.length);
+    assert.ok(response.body.data.totalCount >= response.body.data.count);
+    assert.equal(response.body.data.currentPage, 1);
+    assert.ok(response.body.data.totalPages >= 1);
 
     const propertyIds = response.body.data.properties.map((property) => property.id);
     const newerIndex = propertyIds.indexOf(newerPropertyId);
@@ -187,7 +190,105 @@ describe('Property listing API', { concurrency: false }, () => {
     assert.equal(response.body.data.property.propertyType, 'villa');
     assert.equal(response.body.data.property.price, 280000);
     assert.equal(response.body.data.property.city, 'Lahore');
+    assert.equal(response.body.data.property.ownerName, 'Property API Test Owner');
     assert.equal(typeof response.body.data.property.imageUrl, 'string');
+  });
+
+  it('searches title, city, and address without case sensitivity', async () => {
+    const [titleResponse, cityResponse, addressResponse] = await Promise.all([
+      request(app)
+        .get('/api/properties')
+        .query({ search: `older api apartment ${testId}`.toUpperCase() }),
+      request(app).get('/api/properties').query({ search: 'lAhOrE' }),
+      request(app).get('/api/properties').query({ search: 'block b, dha phase 5' }),
+    ]);
+
+    assert.equal(titleResponse.status, 200);
+    assert.deepEqual(
+      titleResponse.body.data.properties.map((property) => property.id),
+      [olderPropertyId],
+    );
+    assert.equal(
+      cityResponse.body.data.properties.some(
+        (property) => property.id === newerPropertyId,
+      ),
+      true,
+    );
+    assert.equal(
+      addressResponse.body.data.properties.some(
+        (property) => property.id === newerPropertyId,
+      ),
+      true,
+    );
+  });
+
+  it('combines property filters correctly', async () => {
+    const response = await request(app).get('/api/properties').query({
+      search: `Newer API Villa ${testId}`,
+      city: 'lahore',
+      propertyType: 'VILLA',
+      minPrice: '200000',
+      maxPrice: '300000',
+      bedrooms: '5',
+      sort: 'price_asc',
+      page: '1',
+      limit: '5',
+    });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      response.body.data.properties.map((property) => property.id),
+      [newerPropertyId],
+    );
+    assert.equal(response.body.data.totalCount, 1);
+    assert.equal(response.body.data.currentPage, 1);
+    assert.equal(response.body.data.totalPages, 1);
+  });
+
+  it('sorts and paginates while preserving the active search', async () => {
+    const firstPage = await request(app).get('/api/properties').query({
+      search: testId,
+      sort: 'price_asc',
+      page: '1',
+      limit: '1',
+    });
+    const secondPage = await request(app).get('/api/properties').query({
+      search: testId,
+      sort: 'price_asc',
+      page: '2',
+      limit: '1',
+    });
+
+    assert.equal(firstPage.status, 200);
+    assert.equal(firstPage.body.data.properties[0].id, olderPropertyId);
+    assert.equal(firstPage.body.data.count, 1);
+    assert.equal(firstPage.body.data.totalCount, 2);
+    assert.equal(firstPage.body.data.currentPage, 1);
+    assert.equal(firstPage.body.data.totalPages, 2);
+    assert.equal(secondPage.status, 200);
+    assert.equal(secondPage.body.data.properties[0].id, newerPropertyId);
+    assert.equal(secondPage.body.data.currentPage, 2);
+  });
+
+  it('rejects invalid property query parameters', async () => {
+    const response = await request(app).get('/api/properties').query({
+      propertyType: 'castle',
+      minPrice: '500',
+      maxPrice: '100',
+      bedrooms: '2.5',
+      sort: 'popular',
+      page: '0',
+      limit: '61',
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.message, 'Validation failed');
+    assert.ok(response.body.details.propertyType);
+    assert.ok(response.body.details.priceRange);
+    assert.ok(response.body.details.bedrooms);
+    assert.ok(response.body.details.sort);
+    assert.ok(response.body.details.page);
+    assert.ok(response.body.details.limit);
   });
 
   it('returns 404 for a property that is not publicly available', async () => {
