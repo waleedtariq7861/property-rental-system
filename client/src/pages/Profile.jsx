@@ -57,9 +57,14 @@ function Profile() {
 
               <div className="d-flex flex-wrap gap-3 mt-4">
                 {currentUser.role === 'owner' && (
-                  <Link className="btn btn-outline-brand" to="/owner-access">
-                    Verify owner access
-                  </Link>
+                  <>
+                    <Link className="btn btn-brand" to="/owner/dashboard">
+                      Open owner dashboard
+                    </Link>
+                    <Link className="btn btn-outline-brand" to="/owner-access">
+                      Verify owner access
+                    </Link>
+                  </>
                 )}
                 {currentUser.role === 'admin' && (
                   <Link className="btn btn-outline-brand" to="/admin-access">

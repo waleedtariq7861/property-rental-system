@@ -6,6 +6,7 @@ import Contact from '../pages/Contact.jsx';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
 import NotFound from '../pages/NotFound.jsx';
+import OwnerDashboard from '../pages/OwnerDashboard.jsx';
 import Properties from '../pages/Properties.jsx';
 import PropertyDetails from '../pages/PropertyDetails.jsx';
 import Profile from '../pages/Profile.jsx';
@@ -32,6 +33,7 @@ function AppRoutes() {
           <Route path="profile" element={<Profile />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
+          <Route path="owner/dashboard" element={<OwnerDashboard />} />
           <Route path="owner-access" element={<RoleAccess role="owner" />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

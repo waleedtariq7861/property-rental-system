@@ -2,7 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, while Phase 2
-Days 1–2 add public property discovery and complete listing details.
+Days 1–3 add public property discovery, complete listing details, and a secure
+owner dashboard.
 
 ## Phase 1 Features
 
@@ -33,8 +34,17 @@ Days 1–2 add public property discovery and complete listing details.
 - Responsive property details at `/properties/:id`
 - Loading, empty, error, and property-specific 404 states
 
-Property management, rental requests, favorites, and dashboards remain reserved
-for later Phase 2 work.
+## Phase 2 Day 3 Features
+
+- JWT-protected owner dashboard at `/owner/dashboard`
+- Owner-only role authorization on the frontend and backend
+- Dynamic total, active, and recently added property statistics
+- Owner-ID-filtered property portfolio with current listing statuses
+- Responsive desktop sidebar and mobile dashboard navigation
+- Reusable dashboard header, statistics, property card, loading, and empty states
+
+Property creation, editing, deletion, rental requests, and favorites remain
+reserved for later Phase 2 work.
 
 ## Technology Stack
 
@@ -207,6 +217,17 @@ optional query parameters:
 List responses include `properties`, the current-page `count`, `totalCount`,
 `currentPage`, and `totalPages`.
 
+## Owner Dashboard API
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| GET | `/api/owner/dashboard` | Authenticated owner |
+
+The dashboard endpoint derives the owner ID from the verified JWT session and
+returns the safe owner profile, dynamic statistics, and only that owner's
+properties. Active listings are approved and available. Recently added
+properties are those created during the previous seven days.
+
 ## Testing
 
 Run all tests:
@@ -230,10 +251,11 @@ npm run build
 
 Current test coverage includes registration, login, JWT validation, protected
 routes, role authorization, frontend validation, session restoration, logout,
-property discovery queries, pagination, and property details.
+property discovery queries, pagination, property details, owner isolation,
+dashboard statistics, owner-only routing, and dashboard UI states.
 
 ## Current Scope
 
-Authentication and Phase 2 Days 1–2 read-only property discovery are included.
-Property CRUD, rental requests, favorites, and tenant, owner, or admin
-dashboards are not included yet.
+Authentication, Phase 2 Days 1–2 read-only property discovery, and the Phase 2
+Day 3 read-only owner dashboard are included. Property CRUD, rental requests,
+favorites, and tenant or admin dashboards are not included yet.

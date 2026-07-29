@@ -66,6 +66,13 @@ function Navbar() {
             ))}
             {!isRestoring && isAuthenticated ? (
               <>
+                {currentUser.role === 'owner' && (
+                  <li className="nav-item ms-lg-2">
+                    <NavLink className="nav-link" to="/owner/dashboard">
+                      Dashboard
+                    </NavLink>
+                  </li>
+                )}
                 <li className="nav-item ms-lg-2">
                   <NavLink className="nav-link" to="/profile">
                     {currentUser.fullName}
