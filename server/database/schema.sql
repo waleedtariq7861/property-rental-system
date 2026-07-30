@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS properties (
   availability_status ENUM('available', 'rented', 'unavailable') NOT NULL DEFAULT 'available',
   approval_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
   image_url VARCHAR(500) NULL,
+  contact_number VARCHAR(25) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

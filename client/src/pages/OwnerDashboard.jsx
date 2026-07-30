@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   DashboardMobileNavigation,
   DashboardSidebar,
@@ -26,11 +27,15 @@ function isDashboardResponse(data) {
 }
 
 function OwnerDashboard() {
+  const location = useLocation();
   const { currentUser } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [requestKey, setRequestKey] = useState(0);
+  const [successMessage, setSuccessMessage] = useState(
+    location.state?.successMessage || '',
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -84,6 +89,22 @@ function OwnerDashboard() {
 
           <div className="owner-dashboard-main">
             <DashboardHeader owner={owner} />
+
+            {successMessage && (
+              <div
+                className="alert alert-success owner-dashboard-notification"
+                role="status"
+              >
+                <i className="bi bi-check-circle-fill" aria-hidden="true" />
+                <span>{successMessage}</span>
+                <button
+                  aria-label="Dismiss success message"
+                  className="btn-close"
+                  onClick={() => setSuccessMessage('')}
+                  type="button"
+                />
+              </div>
+            )}
 
             {isLoading && <DashboardLoadingState />}
 

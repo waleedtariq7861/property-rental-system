@@ -1,12 +1,37 @@
 import {
+  createProperty as createPropertyRecord,
   findAllAvailableProperties,
   findAvailablePropertyById,
 } from '../services/propertyService.js';
 import ApiError from '../utils/ApiError.js';
 import {
+  validateCreatePropertyPayload,
   validatePropertyId,
   validatePropertyQuery,
 } from '../utils/propertyValidation.js';
+
+export async function createProperty(request, response) {
+  const propertyPayload = validateCreatePropertyPayload(request.body);
+  const property = await createPropertyRecord(
+    request.user.id,
+    propertyPayload,
+  );
+
+  if (!property) {
+    throw new ApiError(
+      500,
+      'Property was created, but the saved record could not be loaded.',
+    );
+  }
+
+  return response.status(201).json({
+    success: true,
+    message: 'Property created successfully.',
+    data: {
+      property,
+    },
+  });
+}
 
 export async function getProperties(request, response) {
   const query = validatePropertyQuery(request.query);

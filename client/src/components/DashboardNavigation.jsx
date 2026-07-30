@@ -14,6 +14,12 @@ const navigationItems = [
     kind: 'anchor',
   },
   {
+    label: 'Add Property',
+    icon: 'bi-house-add-fill',
+    to: '/owner/properties/add',
+    kind: 'route',
+  },
+  {
     label: 'Browse Properties',
     icon: 'bi-search',
     to: '/properties',

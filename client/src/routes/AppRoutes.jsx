@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import MainLayout from '../layouts/MainLayout.jsx';
 import About from '../pages/About.jsx';
+import AddProperty from '../pages/AddProperty.jsx';
 import Contact from '../pages/Contact.jsx';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
@@ -34,6 +35,7 @@ function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
           <Route path="owner/dashboard" element={<OwnerDashboard />} />
+          <Route path="owner/properties/add" element={<AddProperty />} />
           <Route path="owner-access" element={<RoleAccess role="owner" />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

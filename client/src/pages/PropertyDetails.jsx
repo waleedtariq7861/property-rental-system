@@ -190,6 +190,15 @@ function PropertyDetails() {
                   <span>Property type</span>
                   <strong>{formatPropertyType(property.propertyType)}</strong>
                 </div>
+                {property.area && (
+                  <div>
+                    <i className="bi bi-rulers" aria-hidden="true" />
+                    <span>Area</span>
+                    <strong>
+                      {Number(property.area).toLocaleString('en-PK')} sq. ft.
+                    </strong>
+                  </div>
+                )}
               </div>
 
               <article className="property-description-card">
@@ -215,6 +224,16 @@ function PropertyDetails() {
                   <div>
                     <dt>Owner</dt>
                     <dd>{property.ownerName}</dd>
+                  </div>
+                )}
+                {property.contactNumber && (
+                  <div>
+                    <dt>Contact number</dt>
+                    <dd>
+                      <a href={`tel:${property.contactNumber}`}>
+                        {property.contactNumber}
+                      </a>
+                    </dd>
                   </div>
                 )}
                 <div>

@@ -2,8 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, while Phase 2
-Days 1–3 add public property discovery, complete listing details, and a secure
-owner dashboard.
+Days 1–4 add public property discovery, complete listing details, a secure
+owner dashboard, and owner property creation.
 
 ## Phase 1 Features
 
@@ -43,8 +43,18 @@ owner dashboard.
 - Responsive desktop sidebar and mobile dashboard navigation
 - Reusable dashboard header, statistics, property card, loading, and empty states
 
-Property creation, editing, deletion, rental requests, and favorites remain
-reserved for later Phase 2 work.
+## Phase 2 Day 4 Features
+
+- Owner-only property creation page at `/owner/properties/add`
+- JWT-protected `POST /api/properties` endpoint with current-role verification
+- Client-side and server-side property validation with trimmed input
+- Automatic owner ID and timestamp persistence
+- Responsive form with loading, error, and success feedback
+- Immediate owner dashboard refresh after creation
+- Immediate public visibility for newly created available properties
+
+Property editing, deletion, rental requests, and favorites remain reserved for
+later Phase 2 work.
 
 ## Technology Stack
 
@@ -146,6 +156,13 @@ mysql -u root -p < server/database/phase2_day1.sql
 mysql -u root -p < server/database/seed.sql
 ```
 
+When upgrading an existing Phase 2 Day 3 database, apply the additive Day 4
+migration:
+
+```bash
+mysql -u root -p < server/database/phase2_day4.sql
+```
+
 The `users` table stores the user's name, email, bcrypt password hash, role, and
 timestamps. Supported roles are `tenant`, `owner`, and `admin`.
 
@@ -198,6 +215,7 @@ Authorization: Bearer <jwt-token>
 | Method | Endpoint | Access |
 | --- | --- | --- |
 | GET | `/api/properties` | Public |
+| POST | `/api/properties` | Authenticated owner |
 | GET | `/api/properties/:id` | Public |
 
 The list endpoint returns approved, available properties and accepts these
@@ -216,6 +234,12 @@ optional query parameters:
 
 List responses include `properties`, the current-page `count`, `totalCount`,
 `currentPage`, and `totalPages`.
+
+The creation endpoint derives `owner_id` from the verified JWT user and accepts
+`title`, `propertyType`, `description`, `price`, `city`, `address`, `bedrooms`,
+`bathrooms`, `area`, `imageUrl`, `propertyStatus`, and `contactNumber`.
+Available properties are published to the public listing feed immediately;
+rented properties remain visible in the owner's dashboard.
 
 ## Owner Dashboard API
 
@@ -252,10 +276,10 @@ npm run build
 Current test coverage includes registration, login, JWT validation, protected
 routes, role authorization, frontend validation, session restoration, logout,
 property discovery queries, pagination, property details, owner isolation,
-dashboard statistics, owner-only routing, and dashboard UI states.
+dashboard statistics, property creation, creation-role enforcement, immediate
+listing visibility, owner-only routing, and dashboard UI states.
 
 ## Current Scope
 
-Authentication, Phase 2 Days 1–2 read-only property discovery, and the Phase 2
-Day 3 read-only owner dashboard are included. Property CRUD, rental requests,
-favorites, and tenant or admin dashboards are not included yet.
+Authentication and Phase 2 Days 1–4 are included. Property editing and deletion,
+rental requests, favorites, and tenant or admin dashboards are not included yet.

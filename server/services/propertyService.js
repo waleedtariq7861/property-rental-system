@@ -13,6 +13,10 @@ const PUBLIC_PROPERTY_FIELDS = `
   p.bathrooms,
   p.property_type AS propertyType,
   p.image_url AS imageUrl,
+  p.property_size AS area,
+  p.size_unit AS sizeUnit,
+  p.availability_status AS propertyStatus,
+  COALESCE(p.contact_number, u.phone) AS contactNumber,
   p.created_at AS createdAt,
   p.updated_at AS updatedAt
 `;
@@ -123,6 +127,68 @@ export async function findAvailablePropertyById(propertyId) {
       LIMIT 1
     `,
     [propertyId, 'approved', 'available'],
+  );
+
+  return rows[0] || null;
+}
+
+export async function createProperty(ownerId, property) {
+  const propertyCategory = ['office', 'shop'].includes(property.propertyType)
+    ? 'commercial'
+    : 'residential';
+  const locationArea = property.city;
+  const [result] = await pool.execute(
+    `
+      INSERT INTO properties (
+        owner_id,
+        title,
+        description,
+        property_type,
+        property_category,
+        price,
+        city,
+        area,
+        address,
+        bedrooms,
+        bathrooms,
+        property_size,
+        size_unit,
+        availability_status,
+        approval_status,
+        image_url,
+        contact_number
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      ownerId,
+      property.title,
+      property.description,
+      property.propertyType,
+      propertyCategory,
+      property.price,
+      property.city,
+      locationArea,
+      property.address,
+      property.bedrooms,
+      property.bathrooms,
+      property.area,
+      'sq_ft',
+      property.propertyStatus,
+      'approved',
+      property.imageUrl,
+      property.contactNumber,
+    ],
+  );
+
+  const [rows] = await pool.execute(
+    `
+      SELECT ${PUBLIC_PROPERTY_FIELDS}
+      FROM properties p
+      LEFT JOIN users u ON u.id = p.owner_id
+      WHERE p.id = ? AND p.owner_id = ?
+      LIMIT 1
+    `,
+    [result.insertId, ownerId],
   );
 
   return rows[0] || null;

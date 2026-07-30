@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 function DashboardHeader({ owner }) {
   return (
     <header className="owner-dashboard-header">
@@ -11,6 +13,13 @@ function DashboardHeader({ owner }) {
           Here is a clear view of your RentEase property portfolio and listing
           activity.
         </p>
+        <Link
+          className="btn btn-brand-light owner-dashboard-add-link"
+          to="/owner/properties/add"
+        >
+          <i className="bi bi-plus-circle-fill" aria-hidden="true" />
+          Add Property
+        </Link>
       </div>
       <div className="owner-dashboard-header-mark" aria-hidden="true">
         <i className="bi bi-buildings-fill" />
