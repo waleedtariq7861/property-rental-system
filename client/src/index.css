@@ -3078,6 +3078,31 @@ select:focus-visible {
   white-space: nowrap;
 }
 
+.owner-property-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.owner-property-actions .btn {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.owner-property-actions .btn:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .owner-dashboard-state {
   display: grid;
   min-height: 17rem;
@@ -3166,6 +3191,83 @@ select:focus-visible {
 .owner-dashboard-mobile-link.is-active {
   background: var(--brand-100);
   color: var(--brand-800);
+}
+
+.property-modal-backdrop {
+  position: fixed;
+  z-index: 1050;
+  inset: 0;
+  display: grid;
+  padding: 1.25rem;
+  place-items: center;
+  background: rgba(9, 31, 23, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.property-confirmation-modal {
+  width: min(100%, 30rem);
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 1.5rem 4rem rgba(15, 23, 42, 0.24);
+  text-align: center;
+}
+
+.property-confirmation-icon {
+  display: grid;
+  width: 3.75rem;
+  height: 3.75rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  border-radius: 1.15rem;
+  background: #fff0f0;
+  color: #b23b3b;
+  font-size: 1.45rem;
+}
+
+.property-confirmation-modal h2 {
+  margin: 0;
+  color: var(--brand-950);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.property-confirmation-modal > p {
+  margin: 0.8rem auto 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.property-confirmation-modal > p strong {
+  color: var(--brand-950);
+}
+
+.property-confirmation-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(178, 59, 59, 0.2);
+  border-radius: 0.75rem;
+  background: #fff7f7;
+  color: #a52f2f;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.property-confirmation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.property-confirmation-actions .btn {
+  min-height: 2.9rem;
 }
 
 @media (max-width: 1199.98px) {

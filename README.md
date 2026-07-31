@@ -2,8 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, while Phase 2
-Days 1–4 add public property discovery, complete listing details, a secure
-owner dashboard, and owner property creation.
+Days 1–5 add public property discovery, complete listing details, a secure
+owner dashboard, owner property creation, and owner property management.
 
 ## Phase 1 Features
 
@@ -53,8 +53,16 @@ owner dashboard, and owner property creation.
 - Immediate owner dashboard refresh after creation
 - Immediate public visibility for newly created available properties
 
-Property editing, deletion, rental requests, and favorites remain reserved for
-later Phase 2 work.
+Rental requests and favorites remain reserved for later Phase 2 work.
+
+## Phase 2 Day 5 Features
+
+- Owner-only property editing at `/owner/properties/edit/:id`
+- Owner-only property deletion with confirmation modal
+- JWT-protected update and delete APIs with ownership checks
+- Automatic dashboard refresh after editing or deleting
+- Automatic public-listing refresh after availability changes or deletion
+- Responsive edit, loading, success, error, and confirmation states
 
 ## Technology Stack
 
@@ -216,6 +224,9 @@ Authorization: Bearer <jwt-token>
 | --- | --- | --- |
 | GET | `/api/properties` | Public |
 | POST | `/api/properties` | Authenticated owner |
+| GET | `/api/properties/:id/manage` | Authenticated owner of property |
+| PUT | `/api/properties/:id` | Authenticated owner of property |
+| DELETE | `/api/properties/:id` | Authenticated owner of property |
 | GET | `/api/properties/:id` | Public |
 
 The list endpoint returns approved, available properties and accepts these
@@ -240,6 +251,9 @@ The creation endpoint derives `owner_id` from the verified JWT user and accepts
 `bathrooms`, `area`, `imageUrl`, `propertyStatus`, and `contactNumber`.
 Available properties are published to the public listing feed immediately;
 rented properties remain visible in the owner's dashboard.
+Owners can update or delete only properties they own. Deleting a property
+removes it from the database and from subsequent dashboard and public-listing
+responses.
 
 ## Owner Dashboard API
 
@@ -277,9 +291,10 @@ Current test coverage includes registration, login, JWT validation, protected
 routes, role authorization, frontend validation, session restoration, logout,
 property discovery queries, pagination, property details, owner isolation,
 dashboard statistics, property creation, creation-role enforcement, immediate
-listing visibility, owner-only routing, and dashboard UI states.
+listing visibility, property editing, property deletion, ownership isolation,
+owner-only routing, and dashboard UI states.
 
 ## Current Scope
 
-Authentication and Phase 2 Days 1–4 are included. Property editing and deletion,
-rental requests, favorites, and tenant or admin dashboards are not included yet.
+Authentication and Phase 2 Days 1–5 are included. Rental requests, favorites,
+and tenant or admin dashboards are not included yet.

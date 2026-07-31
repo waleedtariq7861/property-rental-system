@@ -5,8 +5,14 @@ import Pagination from '../components/Pagination.jsx';
 import PropertyCard from '../components/PropertyCard.jsx';
 import SearchBar from '../components/SearchBar.jsx';
 import SortDropdown from '../components/SortDropdown.jsx';
-import { getProperties } from '../services/propertyService.js';
+import {
+  getProperties,
+  PROPERTY_DATA_CHANGED_EVENT,
+} from '../services/propertyService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
+
+const PROPERTY_CHANGE_EVENT =
+  PROPERTY_DATA_CHANGED_EVENT || 'rentease:properties-changed';
 
 const PAGE_LIMIT = 9;
 const emptyFilters = Object.freeze({
@@ -146,6 +152,16 @@ function Properties() {
     requestKey,
     sort,
   ]);
+
+  useEffect(() => {
+    function refreshProperties() {
+      setRequestKey((currentKey) => currentKey + 1);
+    }
+
+    window.addEventListener(PROPERTY_CHANGE_EVENT, refreshProperties);
+    return () =>
+      window.removeEventListener(PROPERTY_CHANGE_EVENT, refreshProperties);
+  }, []);
 
   function handleFilterChange(field, value) {
     setFilters((currentFilters) => ({

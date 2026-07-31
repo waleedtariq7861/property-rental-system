@@ -3,6 +3,7 @@ import {
   formatPropertyType,
   propertyPriceFormatter,
 } from '../utils/propertyFormatting.js';
+import { Link } from 'react-router-dom';
 import PropertyImage from './PropertyImage.jsx';
 
 const STATUS_PRESENTATION = Object.freeze({
@@ -42,7 +43,7 @@ function getCurrentStatus(property) {
     : property.availabilityStatus;
 }
 
-function OwnerPropertyCard({ property }) {
+function OwnerPropertyCard({ property, isDeleting = false, onDelete }) {
   const currentStatus = getCurrentStatus(property);
   const status = STATUS_PRESENTATION[currentStatus] || {
     label: 'Status unavailable',
@@ -84,6 +85,26 @@ function OwnerPropertyCard({ property }) {
             <dd>{status.label}</dd>
           </div>
         </dl>
+
+        <div className="owner-property-actions">
+          <Link
+            className="btn btn-outline-brand"
+            to={`/owner/properties/edit/${property.id}`}
+          >
+            <i className="bi bi-pencil-square" aria-hidden="true" />
+            Edit
+          </Link>
+          <button
+            aria-label={`Delete ${property.title}`}
+            className="btn btn-outline-danger"
+            disabled={isDeleting}
+            onClick={() => onDelete(property)}
+            type="button"
+          >
+            <i className="bi bi-trash3" aria-hidden="true" />
+            Delete
+          </button>
+        </div>
       </div>
     </article>
   );

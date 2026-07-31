@@ -189,7 +189,7 @@ function normalizeContactNumber(value, details) {
   return contactNumber;
 }
 
-export function validateCreatePropertyPayload(payload = {}) {
+export function validatePropertyPayload(payload = {}) {
   const source =
     payload && typeof payload === 'object' && !Array.isArray(payload)
       ? payload
@@ -299,6 +299,14 @@ export function validateCreatePropertyPayload(payload = {}) {
     propertyStatus,
     contactNumber,
   };
+}
+
+export function validateCreatePropertyPayload(payload = {}) {
+  return validatePropertyPayload(payload);
+}
+
+export function validateUpdatePropertyPayload(payload = {}) {
+  return validatePropertyPayload(payload);
 }
 
 function normalizeOptionalText(value, fieldName, maxLength, details) {

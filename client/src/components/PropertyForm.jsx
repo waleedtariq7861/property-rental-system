@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   PROPERTY_STATUS_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
@@ -35,16 +35,30 @@ function FieldError({ error, id }) {
 function PropertyForm({
   currentUser,
   isSubmitting,
+  initialValues,
   serverErrors,
   onFieldChange,
   onSubmit,
+  submitLabel = 'Add Property',
+  submittingLabel = 'Saving property...',
 }) {
   const [values, setValues] = useState({
     ...EMPTY_VALUES,
-    contactNumber: currentUser?.phone || '',
+    ...initialValues,
+    contactNumber: initialValues?.contactNumber || currentUser?.phone || '',
   });
   const [clientErrors, setClientErrors] = useState({});
   const errors = { ...serverErrors, ...clientErrors };
+
+  useEffect(() => {
+    setValues({
+      ...EMPTY_VALUES,
+      ...initialValues,
+      contactNumber:
+        initialValues?.contactNumber || currentUser?.phone || '',
+    });
+    setClientErrors({});
+  }, [currentUser?.phone, initialValues]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -496,12 +510,12 @@ function PropertyForm({
                 aria-hidden="true"
                 className="spinner-border spinner-border-sm"
               />
-              Saving property...
+              {submittingLabel}
             </>
           ) : (
             <>
               <i className="bi bi-plus-circle-fill" aria-hidden="true" />
-              Add Property
+              {submitLabel}
             </>
           )}
         </button>

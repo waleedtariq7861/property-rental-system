@@ -193,3 +193,85 @@ export async function createProperty(ownerId, property) {
 
   return rows[0] || null;
 }
+
+export async function findPropertyOwnerId(propertyId) {
+  const [rows] = await pool.execute(
+    `SELECT owner_id AS ownerId FROM properties WHERE id = ? LIMIT 1`,
+    [propertyId],
+  );
+
+  return rows[0]?.ownerId ?? null;
+}
+
+export async function findOwnerPropertyById(ownerId, propertyId) {
+  const [rows] = await pool.execute(
+    `
+      SELECT ${PUBLIC_PROPERTY_FIELDS}
+      FROM properties p
+      LEFT JOIN users u ON u.id = p.owner_id
+      WHERE p.id = ? AND p.owner_id = ?
+      LIMIT 1
+    `,
+    [propertyId, ownerId],
+  );
+
+  return rows[0] || null;
+}
+
+export async function updateProperty(ownerId, propertyId, property) {
+  const propertyCategory = ['office', 'shop'].includes(property.propertyType)
+    ? 'commercial'
+    : 'residential';
+
+  await pool.execute(
+    `
+      UPDATE properties
+      SET
+        title = ?,
+        description = ?,
+        property_type = ?,
+        property_category = ?,
+        price = ?,
+        city = ?,
+        area = ?,
+        address = ?,
+        bedrooms = ?,
+        bathrooms = ?,
+        property_size = ?,
+        size_unit = 'sq_ft',
+        availability_status = ?,
+        image_url = ?,
+        contact_number = ?
+      WHERE id = ? AND owner_id = ?
+    `,
+    [
+      property.title,
+      property.description,
+      property.propertyType,
+      propertyCategory,
+      property.price,
+      property.city,
+      property.city,
+      property.address,
+      property.bedrooms,
+      property.bathrooms,
+      property.area,
+      property.propertyStatus,
+      property.imageUrl,
+      property.contactNumber,
+      propertyId,
+      ownerId,
+    ],
+  );
+
+  return findOwnerPropertyById(ownerId, propertyId);
+}
+
+export async function deleteProperty(ownerId, propertyId) {
+  const [result] = await pool.execute(
+    'DELETE FROM properties WHERE id = ? AND owner_id = ?',
+    [propertyId, ownerId],
+  );
+
+  return result.affectedRows > 0;
+}

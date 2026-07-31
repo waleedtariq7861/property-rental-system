@@ -21,6 +21,7 @@ vi.mock('../services/ownerDashboardService.js', () => ({
 }));
 
 vi.mock('../services/propertyService.js', () => ({
+  PROPERTY_DATA_CHANGED_EVENT: 'rentease:properties-changed',
   createProperty: vi.fn(),
   getProperties: vi.fn(),
   getPropertyById: vi.fn(),

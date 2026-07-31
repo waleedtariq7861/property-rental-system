@@ -7,9 +7,11 @@ import {
 import DashboardHeader from '../components/DashboardHeader.jsx';
 import DashboardLoadingState from '../components/DashboardLoadingState.jsx';
 import DashboardStatCards from '../components/DashboardStatCards.jsx';
+import DeletePropertyModal from '../components/DeletePropertyModal.jsx';
 import OwnerDashboardEmptyState from '../components/OwnerDashboardEmptyState.jsx';
 import OwnerPropertyCard from '../components/OwnerPropertyCard.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { deleteProperty } from '../services/propertyService.js';
 import { getOwnerDashboard } from '../services/ownerDashboardService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
 
@@ -36,6 +38,9 @@ function OwnerDashboard() {
   const [successMessage, setSuccessMessage] = useState(
     location.state?.successMessage || '',
   );
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -78,6 +83,38 @@ function OwnerDashboard() {
 
   const owner = dashboard?.owner || currentUser;
   const properties = dashboard?.properties || [];
+
+  function openDeleteConfirmation(property) {
+    setDeleteError('');
+    setDeleteCandidate(property);
+  }
+
+  function closeDeleteConfirmation() {
+    if (!isDeleting) {
+      setDeleteCandidate(null);
+      setDeleteError('');
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteCandidate) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError('');
+
+    try {
+      await deleteProperty(deleteCandidate.id);
+      setDeleteCandidate(null);
+      setSuccessMessage(`"${deleteCandidate.title}" was deleted successfully.`);
+      setRequestKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      setDeleteError(getApiErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <div className="page-shell owner-dashboard-page">
@@ -150,7 +187,12 @@ function OwnerDashboard() {
                   ) : (
                     <div className="owner-property-grid">
                       {properties.map((property) => (
-                        <OwnerPropertyCard key={property.id} property={property} />
+                        <OwnerPropertyCard
+                          isDeleting={isDeleting && deleteCandidate?.id === property.id}
+                          key={property.id}
+                          onDelete={openDeleteConfirmation}
+                          property={property}
+                        />
                       ))}
                     </div>
                   )}
@@ -160,6 +202,13 @@ function OwnerDashboard() {
           </div>
         </div>
       </div>
+      <DeletePropertyModal
+        errorMessage={deleteError}
+        isDeleting={isDeleting}
+        onCancel={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        property={deleteCandidate}
+      />
     </div>
   );
 }

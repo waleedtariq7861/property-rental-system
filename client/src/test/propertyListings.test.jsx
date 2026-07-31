@@ -10,6 +10,7 @@ import {
 } from '../services/propertyService.js';
 
 vi.mock('../services/propertyService.js', () => ({
+  PROPERTY_DATA_CHANGED_EVENT: 'rentease:properties-changed',
   getProperties: vi.fn(),
   getPropertyById: vi.fn(),
 }));
@@ -238,6 +239,16 @@ describe('Property listings page', () => {
       await screen.findByRole('heading', { name: apartment.title }),
     ).toBeInTheDocument();
     expect(getProperties).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes when an owner updates or deletes a property elsewhere', async () => {
+    getProperties.mockResolvedValue(propertyListResponse());
+
+    renderProperties();
+    await screen.findByRole('heading', { name: apartment.title });
+    window.dispatchEvent(new Event('rentease:properties-changed'));
+
+    await waitFor(() => expect(getProperties).toHaveBeenCalledTimes(2));
   });
 });
 
