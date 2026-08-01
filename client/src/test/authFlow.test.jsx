@@ -199,6 +199,21 @@ describe('Phase 1 frontend authentication flow', () => {
     expect(screen.getByText(tenantUser.email)).toBeInTheDocument();
   });
 
+  it('fails closed when a saved session cannot be verified', async () => {
+    saveStoredAuth({
+      token: 'unverified-owner-token',
+      user: ownerUser,
+    });
+    getAuthenticatedProfile.mockRejectedValue(new Error('API unavailable'));
+
+    renderApp('/owner/dashboard');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Welcome back' }),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem('rentease.auth')).toBeNull();
+  });
+
   it('redirects an unauthenticated protected request to login', async () => {
     renderApp('/profile');
 

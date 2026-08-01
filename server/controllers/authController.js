@@ -72,6 +72,10 @@ export async function loginUser(request, response) {
     throw new ApiError(401, 'Invalid email or password.');
   }
 
+  if (user.accountStatus !== 'active') {
+    throw new ApiError(403, 'Your account is not active.');
+  }
+
   const token = createAccessToken(user);
 
   return response.status(200).json({

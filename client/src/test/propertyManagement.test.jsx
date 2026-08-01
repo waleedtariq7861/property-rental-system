@@ -140,6 +140,26 @@ describe('Phase 2 Day 5 property management', () => {
     );
   });
 
+  it('labels a legacy property area with its stored unit', async () => {
+    getOwnerProperty.mockResolvedValue({
+      success: true,
+      data: {
+        property: {
+          ...property,
+          area: 10,
+          sizeUnit: 'marla',
+        },
+      },
+    });
+
+    renderApp('/owner/properties/edit/75');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Edit Property' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByLabelText('Area (Marla)')).toHaveValue(10);
+  });
+
   it('updates the owner property and returns to the refreshed dashboard', async () => {
     const user = userEvent.setup();
     getOwnerProperty.mockResolvedValue({ success: true, data: { property } });

@@ -28,8 +28,12 @@ function readBearerToken(request) {
 
 function hasRequiredClaims(payload) {
   const hasUserId =
-    (typeof payload?.userId === 'number' && Number.isSafeInteger(payload.userId)) ||
-    (typeof payload?.userId === 'string' && payload.userId.length > 0);
+    (typeof payload?.userId === 'number' &&
+      Number.isSafeInteger(payload.userId) &&
+      payload.userId > 0) ||
+    (typeof payload?.userId === 'string' &&
+      /^[1-9]\d*$/.test(payload.userId) &&
+      Number.isSafeInteger(Number(payload.userId)));
 
   return (
     hasUserId &&
@@ -52,13 +56,17 @@ export async function authenticate(request, response, next) {
     const user = await findPublicUserById(payload.userId);
 
     if (!user) {
-      throw new ApiError(404, 'User not found.');
+      throw new ApiError(401, 'Authentication token is invalid.');
+    }
+
+    if (user.accountStatus !== 'active') {
+      throw new ApiError(401, 'Your account is not active.');
     }
 
     request.auth = {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
     };
     request.user = toPublicUser(user);
 

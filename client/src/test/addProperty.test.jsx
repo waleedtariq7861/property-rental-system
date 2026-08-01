@@ -147,7 +147,8 @@ describe('Add property page', () => {
     );
     expect(screen.getByLabelText('City')).toBeInTheDocument();
     expect(screen.getByLabelText('Full Address')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bedrooms')).toHaveAttribute('min', '1');
+    expect(screen.getByLabelText('Bedrooms')).toHaveAttribute('min', '0');
+    expect(screen.getByLabelText('Bathrooms')).toHaveAttribute('min', '0');
     expect(screen.getByLabelText('Bathrooms')).toHaveAttribute('type', 'number');
     expect(screen.getByLabelText('Area (Sq. Ft.)')).toBeInTheDocument();
     expect(screen.getByLabelText('Image URL')).toHaveAttribute('type', 'url');
@@ -170,6 +171,24 @@ describe('Add property page', () => {
     expect(screen.getByText('Price is required.')).toBeInTheDocument();
     expect(screen.getByText('Bedrooms is required.')).toBeInTheDocument();
     expect(screen.getByText('Contact number is required.')).toBeInTheDocument();
+    expect(createProperty).not.toHaveBeenCalled();
+  });
+
+  it('rejects bathroom precision that the database cannot store exactly', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await screen.findByRole('heading', { name: 'Add a Property' });
+    await completePropertyForm(user);
+    await user.clear(screen.getByLabelText('Bathrooms'));
+    await user.type(screen.getByLabelText('Bathrooms'), '2.55');
+    await user.click(screen.getByRole('button', { name: 'Add Property' }));
+
+    expect(
+      await screen.findByText(
+        'Bathrooms must be a non-negative number with up to one decimal place.',
+      ),
+    ).toBeInTheDocument();
     expect(createProperty).not.toHaveBeenCalled();
   });
 
@@ -209,6 +228,40 @@ describe('Add property page', () => {
       screen.getByRole('heading', { name: createdProperty.title }),
     ).toBeInTheDocument();
     expect(getOwnerDashboard).toHaveBeenCalled();
+  });
+
+  it('submits valid zero room counts for a commercial property', async () => {
+    const user = userEvent.setup();
+    createProperty.mockResolvedValue({
+      success: true,
+      data: {
+        property: {
+          ...createdProperty,
+          propertyType: 'office',
+          bedrooms: 0,
+          bathrooms: 0,
+        },
+      },
+    });
+
+    renderApp();
+    await screen.findByRole('heading', { name: 'Add a Property' });
+    await completePropertyForm(user);
+    await user.selectOptions(screen.getByLabelText('Property Type'), 'office');
+    await user.clear(screen.getByLabelText('Bedrooms'));
+    await user.type(screen.getByLabelText('Bedrooms'), '0');
+    await user.clear(screen.getByLabelText('Bathrooms'));
+    await user.type(screen.getByLabelText('Bathrooms'), '0');
+    await user.click(screen.getByRole('button', { name: 'Add Property' }));
+
+    await waitFor(() => expect(createProperty).toHaveBeenCalledTimes(1));
+    expect(createProperty).toHaveBeenCalledWith(
+      expect.objectContaining({
+        propertyType: 'office',
+        bedrooms: '0',
+        bathrooms: '0',
+      }),
+    );
   });
 
   it('disables the form and shows a spinner while saving', async () => {

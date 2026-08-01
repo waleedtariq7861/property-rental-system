@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 
 const navigationItems = [
   {
@@ -10,7 +10,7 @@ const navigationItems = [
   {
     label: 'My Properties',
     icon: 'bi-houses-fill',
-    to: '#my-properties',
+    to: '/owner/dashboard#my-properties',
     kind: 'anchor',
   },
   {
@@ -47,9 +47,9 @@ function NavigationItems({ mobile = false }) {
 
     if (item.kind === 'anchor') {
       return (
-        <a className={className} href={item.to} key={item.to}>
+        <Link className={className} to={item.to} key={item.to}>
           {content}
-        </a>
+        </Link>
       );
     }
 

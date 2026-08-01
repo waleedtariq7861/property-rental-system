@@ -150,6 +150,29 @@ describe('Owner dashboard page', () => {
     expect(screen.getAllByText('Pending Review')).toHaveLength(2);
     expect(screen.getAllByRole('navigation', { name: 'Owner dashboard' }))
       .toHaveLength(2);
+    screen.getAllByRole('link', { name: 'My Properties' }).forEach((link) => {
+      expect(link).toHaveAttribute(
+        'href',
+        '/owner/dashboard#my-properties',
+      );
+    });
+  });
+
+  it('scrolls to the property portfolio when opened through its dashboard link', async () => {
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const scrollIntoView = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    getOwnerDashboard.mockResolvedValue(dashboardResponse());
+
+    try {
+      renderApp('/owner/dashboard#my-properties');
+
+      await waitFor(() =>
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' }),
+      );
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
   });
 
   it('shows the owner-specific empty state when no properties exist', async () => {

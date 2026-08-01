@@ -238,7 +238,6 @@ export async function updateProperty(ownerId, propertyId, property) {
         bedrooms = ?,
         bathrooms = ?,
         property_size = ?,
-        size_unit = 'sq_ft',
         availability_status = ?,
         image_url = ?,
         contact_number = ?

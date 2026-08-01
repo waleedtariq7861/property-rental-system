@@ -160,26 +160,38 @@ describe('Owner property management API', { concurrency: false }, () => {
   });
 
   it('rejects tenants and other owners from managing the property', async () => {
-    const [tenantEdit, otherOwnerDelete] = await Promise.all([
-      request(app)
-        .put(`/api/properties/${propertyId}`)
-        .set('Authorization', `Bearer ${tenantToken}`)
-        .send(validUpdate),
-      request(app)
-        .delete(`/api/properties/${propertyId}`)
-        .set('Authorization', `Bearer ${otherOwnerToken}`),
-    ]);
+    const [tenantEdit, otherOwnerRead, otherOwnerEdit, otherOwnerDelete] =
+      await Promise.all([
+        request(app)
+          .put(`/api/properties/${propertyId}`)
+          .set('Authorization', `Bearer ${tenantToken}`)
+          .send(validUpdate),
+        request(app)
+          .get(`/api/properties/${propertyId}/manage`)
+          .set('Authorization', `Bearer ${otherOwnerToken}`),
+        request(app)
+          .put(`/api/properties/${propertyId}`)
+          .set('Authorization', `Bearer ${otherOwnerToken}`)
+          .send(validUpdate),
+        request(app)
+          .delete(`/api/properties/${propertyId}`)
+          .set('Authorization', `Bearer ${otherOwnerToken}`),
+      ]);
 
     assert.equal(tenantEdit.status, 403);
+    assert.equal(otherOwnerRead.status, 403);
+    assert.equal(otherOwnerEdit.status, 403);
     assert.equal(otherOwnerDelete.status, 403);
     assert.equal(
       tenantEdit.body.message,
       'You do not have permission to access this resource.',
     );
     assert.equal(
-      otherOwnerDelete.body.message,
+      otherOwnerRead.body.message,
       'You do not have permission to manage this property.',
     );
+    assert.equal(otherOwnerEdit.body.message, otherOwnerRead.body.message);
+    assert.equal(otherOwnerDelete.body.message, otherOwnerRead.body.message);
   });
 
   it('returns the complete property to its owner for editing', async () => {
@@ -193,6 +205,44 @@ describe('Owner property management API', { concurrency: false }, () => {
     assert.equal(response.body.data.property.description, 'Property used to verify owner-only edit and delete operations.');
     assert.equal(response.body.data.property.area, 1200);
     assert.equal(response.body.data.property.contactNumber, '+92 300 1112233');
+  });
+
+  it('allows valid zero room counts for commercial properties', async () => {
+    const response = await request(app)
+      .put(`/api/properties/${propertyId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        ...validUpdate,
+        propertyType: 'office',
+        bedrooms: '0',
+        bathrooms: '0',
+      });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.property.propertyType, 'office');
+    assert.equal(response.body.data.property.bedrooms, 0);
+    assert.equal(response.body.data.property.bathrooms, 0);
+  });
+
+  it('preserves the stored area unit while editing a property', async () => {
+    await pool.execute(
+      'UPDATE properties SET property_size = ?, size_unit = ? WHERE id = ?',
+      [10, 'marla', propertyId],
+    );
+
+    const response = await request(app)
+      .put(`/api/properties/${propertyId}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ ...validUpdate, area: '12' });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.data.property.area, 12);
+    assert.equal(response.body.data.property.sizeUnit, 'marla');
+
+    await pool.execute(
+      'UPDATE properties SET size_unit = ? WHERE id = ?',
+      ['sq_ft', propertyId],
+    );
   });
 
   it('validates and updates only the authenticated owner property', async () => {

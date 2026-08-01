@@ -28,6 +28,7 @@ function toFormValues(property, currentUser) {
     bathrooms:
       property.bathrooms === undefined ? '' : String(property.bathrooms),
     area: property.area === undefined ? '' : String(property.area),
+    sizeUnit: property.sizeUnit || 'sq_ft',
     imageUrl: property.imageUrl || '',
     propertyStatus:
       property.propertyStatus || property.availabilityStatus || 'available',

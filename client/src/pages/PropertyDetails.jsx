@@ -5,6 +5,7 @@ import PropertyImage from '../components/PropertyImage.jsx';
 import { getPropertyById } from '../services/propertyService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
 import {
+  formatPropertyArea,
   formatPropertyCount,
   formatPropertyDate,
   formatPropertyType,
@@ -195,7 +196,7 @@ function PropertyDetails() {
                     <i className="bi bi-rulers" aria-hidden="true" />
                     <span>Area</span>
                     <strong>
-                      {Number(property.area).toLocaleString('en-PK')} sq. ft.
+                      {formatPropertyArea(property.area, property.sizeUnit)}
                     </strong>
                   </div>
                 )}

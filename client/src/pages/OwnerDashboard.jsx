@@ -81,6 +81,18 @@ function OwnerDashboard() {
     return () => controller.abort();
   }, [requestKey]);
 
+  useEffect(() => {
+    if (
+      location.hash === '#my-properties' &&
+      !isLoading &&
+      dashboard
+    ) {
+      document.getElementById('my-properties')?.scrollIntoView({
+        block: 'start',
+      });
+    }
+  }, [dashboard, isLoading, location.hash]);
+
   const owner = dashboard?.owner || currentUser;
   const properties = dashboard?.properties || [];
 
@@ -97,7 +109,7 @@ function OwnerDashboard() {
   }
 
   async function confirmDelete() {
-    if (!deleteCandidate) {
+    if (!deleteCandidate || isDeleting) {
       return;
     }
 

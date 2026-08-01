@@ -20,8 +20,9 @@ const PROPERTY_TYPES = new Set(
 const PROPERTY_STATUSES = new Set(
   PROPERTY_STATUS_OPTIONS.map((option) => option.value),
 );
-const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
+const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const POSITIVE_DECIMAL_PATTERN = /^\d+(?:\.\d{1,2})?$/;
+const ONE_DECIMAL_PATTERN = /^\d+(?:\.\d)?$/;
 const CONTACT_NUMBER_PATTERN = /^\+?[\d\s()-]+$/;
 
 function normalizeText(value) {
@@ -53,20 +54,28 @@ function validatePositiveDecimal({
   field,
   label,
   maximum,
+  allowZero = false,
+  decimalPlaces = 2,
   errors,
 }) {
   const normalizedValue = normalizeText(value);
   const numberValue = Number(normalizedValue);
+  const decimalPattern = decimalPlaces === 1
+    ? ONE_DECIMAL_PATTERN
+    : POSITIVE_DECIMAL_PATTERN;
+  const precisionLabel = decimalPlaces === 1
+    ? 'one decimal place'
+    : 'two decimal places';
 
   if (!normalizedValue) {
     errors[field] = `${label} is required.`;
   } else if (
-    !POSITIVE_DECIMAL_PATTERN.test(normalizedValue) ||
+    !decimalPattern.test(normalizedValue) ||
     !Number.isFinite(numberValue) ||
-    numberValue <= 0
+    (allowZero ? numberValue < 0 : numberValue <= 0)
   ) {
     errors[field] =
-      `${label} must be a positive number with up to two decimal places.`;
+      `${label} must be a ${allowZero ? 'non-negative' : 'positive'} number with up to ${precisionLabel}.`;
   } else if (numberValue > maximum) {
     errors[field] = `${label} must not exceed ${maximum}.`;
   }
@@ -118,6 +127,8 @@ export function validatePropertyForm(values) {
     field: 'bathrooms',
     label: 'Bathrooms',
     maximum: 99.9,
+    allowZero: true,
+    decimalPlaces: 1,
     errors,
   });
   const area = validatePositiveDecimal({
@@ -152,11 +163,11 @@ export function validatePropertyForm(values) {
   if (!bedrooms) {
     errors.bedrooms = 'Bedrooms is required.';
   } else if (
-    !POSITIVE_INTEGER_PATTERN.test(bedrooms) ||
+    !NON_NEGATIVE_INTEGER_PATTERN.test(bedrooms) ||
     Number(bedrooms) > 65_535
   ) {
     errors.bedrooms =
-      'Bedrooms must be a positive integer no greater than 65535.';
+      'Bedrooms must be a non-negative integer no greater than 65535.';
   }
 
   if (imageUrl && !errors.imageUrl) {

@@ -108,6 +108,13 @@ function Properties() {
             Math.ceil(nextTotalCount / queryParameters.limit),
         );
 
+        const lastValidPage = nextTotalPages > 0 ? nextTotalPages : 1;
+
+        if (currentPage > lastValidPage) {
+          setCurrentPage(lastValidPage);
+          return;
+        }
+
         setProperties(nextProperties);
         setTotalCount(Number.isFinite(nextTotalCount) ? nextTotalCount : 0);
         setCurrentPage(

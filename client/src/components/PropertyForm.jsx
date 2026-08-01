@@ -4,6 +4,7 @@ import {
   PROPERTY_TYPE_OPTIONS,
   validatePropertyForm,
 } from '../utils/propertyFormValidation.js';
+import { formatPropertySizeUnit } from '../utils/propertyFormatting.js';
 
 const EMPTY_VALUES = Object.freeze({
   title: '',
@@ -15,6 +16,7 @@ const EMPTY_VALUES = Object.freeze({
   bedrooms: '',
   bathrooms: '',
   area: '',
+  sizeUnit: 'sq_ft',
   imageUrl: '',
   propertyStatus: 'available',
   contactNumber: '',
@@ -49,6 +51,7 @@ function PropertyForm({
   });
   const [clientErrors, setClientErrors] = useState({});
   const errors = { ...serverErrors, ...clientErrors };
+  const areaUnitLabel = formatPropertySizeUnit(values.sizeUnit);
 
   useEffect(() => {
     setValues({
@@ -98,6 +101,11 @@ function PropertyForm({
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
+
     const result = validatePropertyForm(values);
 
     if (Object.keys(result.errors).length > 0) {
@@ -352,7 +360,7 @@ function PropertyForm({
               disabled={isSubmitting}
               id="property-bedrooms"
               inputMode="numeric"
-              min="1"
+              min="0"
               name="bedrooms"
               onBlur={handleBlur}
               onChange={handleChange}
@@ -375,7 +383,7 @@ function PropertyForm({
               disabled={isSubmitting}
               id="property-bathrooms"
               inputMode="decimal"
-              min="0.1"
+              min="0"
               name="bathrooms"
               onBlur={handleBlur}
               onChange={handleChange}
@@ -392,7 +400,7 @@ function PropertyForm({
 
           <div className="add-property-field">
             <label className="form-label" htmlFor="property-area">
-              Area (Sq. Ft.)
+              Area ({areaUnitLabel})
             </label>
             <input
               aria-describedby={describedBy('area')}

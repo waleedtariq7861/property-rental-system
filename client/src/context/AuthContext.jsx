@@ -51,12 +51,8 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        if (error.response?.status === 401 || error.response?.status === 404) {
-          clearStoredAuth();
-          setAuth(null);
-        } else {
-          setAuth(storedAuth);
-        }
+        clearStoredAuth();
+        setAuth(null);
       } finally {
         if (!controller.signal.aborted) {
           setIsRestoring(false);

@@ -18,10 +18,12 @@ const testId = `${Date.now()}-${process.pid}`;
 const tenantEmail = `jwt.tenant.${testId}@rentease.test`;
 const ownerEmail = `jwt.owner.${testId}@rentease.test`;
 const adminEmail = `jwt.admin.${testId}@rentease.test`;
+const suspendedEmail = `jwt.suspended.${testId}@rentease.test`;
 const password = 'SecurePass123!';
 let tenantToken;
 let ownerToken;
 let adminToken;
+let suspendedUserId;
 
 describe('JWT authentication and role authorization', { concurrency: false }, () => {
   before(async () => {
@@ -29,26 +31,39 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
 
     await pool.execute(
       `
-        INSERT INTO users (full_name, email, password_hash, role)
-        VALUES (?, ?, ?, ?), (?, ?, ?, ?)
+        INSERT INTO users (full_name, email, password_hash, role, account_status)
+        VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)
       `,
       [
         'JWT Test Owner',
         ownerEmail,
         passwordHash,
         'owner',
+        'active',
         'JWT Test Admin',
         adminEmail,
         passwordHash,
         'admin',
+        'active',
+        'Suspended JWT Test Owner',
+        suspendedEmail,
+        passwordHash,
+        'owner',
+        'suspended',
       ],
     );
+
+    const [suspendedUsers] = await pool.execute(
+      'SELECT id FROM users WHERE email = ? LIMIT 1',
+      [suspendedEmail],
+    );
+    suspendedUserId = suspendedUsers[0].id;
   });
 
   after(async () => {
     await pool.execute(
-      'DELETE FROM users WHERE email IN (?, ?, ?)',
-      [tenantEmail, ownerEmail, adminEmail],
+      'DELETE FROM users WHERE email IN (?, ?, ?, ?)',
+      [tenantEmail, ownerEmail, adminEmail, suspendedEmail],
     );
     await pool.end();
   });
@@ -188,6 +203,35 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
     assert.equal(response.body.message, 'Invalid email or password.');
   });
 
+  it('rejects login for an inactive account', async () => {
+    const response = await request(app).post('/api/auth/login').send({
+      email: suspendedEmail,
+      password,
+    });
+
+    assert.equal(response.status, 403);
+    assert.equal(response.body.message, 'Your account is not active.');
+  });
+
+  it('revokes protected access when the current account is inactive', async () => {
+    const suspendedToken = jwt.sign(
+      {
+        userId: suspendedUserId,
+        email: suspendedEmail,
+        role: 'owner',
+      },
+      process.env.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '5m' },
+    );
+
+    const response = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', `Bearer ${suspendedToken}`);
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.message, 'Your account is not active.');
+  });
+
   it('returns the safe profile for a valid Bearer token', async () => {
     const response = await request(app)
       .get('/api/auth/profile')
@@ -235,7 +279,26 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
     assert.equal(response.body.message, 'Authentication token has expired.');
   });
 
-  it('returns user not found for a valid token whose user no longer exists', async () => {
+  it('rejects a validly signed token with malformed user claims', async () => {
+    const malformedClaimsToken = jwt.sign(
+      {
+        userId: 'not-a-user-id',
+        email: tenantEmail,
+        role: 'tenant',
+      },
+      process.env.JWT_SECRET,
+      { algorithm: 'HS256', expiresIn: '5m' },
+    );
+
+    const response = await request(app)
+      .get('/api/auth/profile')
+      .set('Authorization', `Bearer ${malformedClaimsToken}`);
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.message, 'Authentication token is invalid.');
+  });
+
+  it('revokes a valid token when its user no longer exists', async () => {
     const unknownUserToken = jwt.sign(
       {
         userId: Number.MAX_SAFE_INTEGER,
@@ -250,8 +313,8 @@ describe('JWT authentication and role authorization', { concurrency: false }, ()
       .get('/api/auth/profile')
       .set('Authorization', `Bearer ${unknownUserToken}`);
 
-    assert.equal(response.status, 404);
-    assert.equal(response.body.message, 'User not found.');
+    assert.equal(response.status, 401);
+    assert.equal(response.body.message, 'Authentication token is invalid.');
   });
 
   it('rejects a normal user from the admin-only route', async () => {

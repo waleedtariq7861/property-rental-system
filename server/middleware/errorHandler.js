@@ -1,5 +1,3 @@
-import env from '../config/env.js';
-
 function errorHandler(error, request, response, next) {
   if (response.headersSent) {
     return next(error);
@@ -20,7 +18,7 @@ function errorHandler(error, request, response, next) {
     data: null,
   };
 
-  if (error.details && !env.isProduction) {
+  if (error.details && !isServerError) {
     payload.details = error.details;
   }
 

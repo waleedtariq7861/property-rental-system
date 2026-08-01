@@ -3,6 +3,7 @@ import ApiError from './ApiError.js';
 const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
 const NON_NEGATIVE_INTEGER_PATTERN = /^\d+$/;
 const DECIMAL_PATTERN = /^\d+(?:\.\d{1,2})?$/;
+const ONE_DECIMAL_PATTERN = /^\d+(?:\.\d)?$/;
 const MAX_PRICE = 9_999_999_999.99;
 const MAX_PROPERTY_SIZE = 99_999_999.99;
 const MAX_PAGE = 1_000_000;
@@ -78,6 +79,7 @@ function normalizeRequiredDecimal(
   label,
   maximumValue,
   details,
+  { allowZero = false, decimalPlaces = 2 } = {},
 ) {
   const normalizedValue =
     typeof value === 'number' && Number.isFinite(value)
@@ -86,16 +88,22 @@ function normalizeRequiredDecimal(
         ? value.trim()
         : '';
   const numberValue = Number(normalizedValue);
+  const decimalPattern = decimalPlaces === 1
+    ? ONE_DECIMAL_PATTERN
+    : DECIMAL_PATTERN;
+  const precisionLabel = decimalPlaces === 1
+    ? 'one decimal place'
+    : 'two decimal places';
 
   if (!normalizedValue) {
     details[fieldName] = `${label} is required.`;
   } else if (
-    !DECIMAL_PATTERN.test(normalizedValue) ||
+    !decimalPattern.test(normalizedValue) ||
     !Number.isFinite(numberValue) ||
-    numberValue <= 0
+    (allowZero ? numberValue < 0 : numberValue <= 0)
   ) {
     details[fieldName] =
-      `${label} must be a positive number with up to two decimal places.`;
+      `${label} must be a ${allowZero ? 'non-negative' : 'positive'} number with up to ${precisionLabel}.`;
   } else if (numberValue > maximumValue) {
     details[fieldName] = `${label} must not exceed ${maximumValue}.`;
   }
@@ -103,7 +111,7 @@ function normalizeRequiredDecimal(
   return numberValue;
 }
 
-function normalizeRequiredPositiveInteger(
+function normalizeRequiredNonNegativeInteger(
   value,
   fieldName,
   label,
@@ -121,12 +129,12 @@ function normalizeRequiredPositiveInteger(
   if (!normalizedValue) {
     details[fieldName] = `${label} is required.`;
   } else if (
-    !POSITIVE_INTEGER_PATTERN.test(normalizedValue) ||
+    !NON_NEGATIVE_INTEGER_PATTERN.test(normalizedValue) ||
     !Number.isSafeInteger(numberValue) ||
     numberValue > maximumValue
   ) {
     details[fieldName] =
-      `${label} must be a positive integer no greater than ${maximumValue}.`;
+      `${label} must be a non-negative integer no greater than ${maximumValue}.`;
   }
 
   return numberValue;
@@ -237,7 +245,7 @@ export function validatePropertyPayload(payload = {}) {
     255,
     details,
   );
-  const bedrooms = normalizeRequiredPositiveInteger(
+  const bedrooms = normalizeRequiredNonNegativeInteger(
     source.bedrooms,
     'bedrooms',
     'Bedrooms',
@@ -250,6 +258,7 @@ export function validatePropertyPayload(payload = {}) {
     'Bathrooms',
     99.9,
     details,
+    { allowZero: true, decimalPlaces: 1 },
   );
   const area = normalizeRequiredDecimal(
     source.area,

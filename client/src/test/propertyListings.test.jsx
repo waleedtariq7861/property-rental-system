@@ -187,6 +187,62 @@ describe('Property listings page', () => {
     );
   });
 
+  it('returns to the last valid page when refreshed results shrink', async () => {
+    const user = userEvent.setup();
+    let resultsShrank = false;
+
+    getProperties.mockImplementation(({ params }) => {
+      if (resultsShrank && params.page === 2) {
+        return Promise.resolve(
+          propertyListResponse({
+            properties: [],
+            count: 0,
+            totalCount: 9,
+            currentPage: 2,
+            totalPages: 1,
+          }),
+        );
+      }
+
+      return Promise.resolve(
+        propertyListResponse({
+          totalCount: resultsShrank ? 9 : 10,
+          currentPage: params.page,
+          totalPages: resultsShrank ? 1 : 2,
+        }),
+      );
+    });
+
+    renderProperties();
+    await screen.findByRole('heading', { name: apartment.title });
+    await user.click(screen.getByRole('button', { name: 'Go to page 2' }));
+    await waitFor(() =>
+      expect(getProperties).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ page: 2 }),
+        }),
+      ),
+    );
+
+    resultsShrank = true;
+    window.dispatchEvent(new Event('rentease:properties-changed'));
+
+    await waitFor(() =>
+      expect(getProperties).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({ page: 1 }),
+        }),
+      ),
+    );
+    expect(
+      screen.getByText(
+        (_content, element) =>
+          element.tagName === 'P' &&
+          element.textContent === 'Showing 1–9 of 9 properties',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('shows the filtered and unfiltered empty states', async () => {
     const user = userEvent.setup();
     getProperties.mockResolvedValue(
@@ -270,7 +326,13 @@ describe('Property details page', () => {
   it('renders the complete property and owner information', async () => {
     getPropertyById.mockResolvedValue({
       success: true,
-      data: { property: apartment },
+      data: {
+        property: {
+          ...apartment,
+          area: 10,
+          sizeUnit: 'marla',
+        },
+      },
     });
 
     renderPropertyDetails();
@@ -281,6 +343,7 @@ describe('Property details page', () => {
     expect(screen.getByText('PKR 85,000')).toBeInTheDocument();
     expect(screen.getAllByText(apartment.address)).toHaveLength(2);
     expect(screen.getByText(apartment.description)).toBeInTheDocument();
+    expect(screen.getByText('10 Marla')).toBeInTheDocument();
     expect(screen.getByText(apartment.ownerName)).toBeInTheDocument();
     expect(screen.getByText('25 July 2026')).toBeInTheDocument();
     expect(getPropertyById).toHaveBeenCalledWith(
