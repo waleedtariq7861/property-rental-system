@@ -2,17 +2,32 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from '../context/AuthContext.jsx';
 import Properties from '../pages/Properties.jsx';
 import PropertyDetails from '../pages/PropertyDetails.jsx';
+import { getAuthenticatedProfile } from '../services/authService.js';
 import {
   getProperties,
   getPropertyById,
 } from '../services/propertyService.js';
+import { createRentalRequest } from '../services/rentalRequestService.js';
+import { saveStoredAuth } from '../utils/authStorage.js';
+
+vi.mock('../services/authService.js', () => ({
+  getAuthenticatedProfile: vi.fn(),
+  loginAccount: vi.fn(),
+  registerAccount: vi.fn(),
+}));
 
 vi.mock('../services/propertyService.js', () => ({
   PROPERTY_DATA_CHANGED_EVENT: 'rentease:properties-changed',
   getProperties: vi.fn(),
   getPropertyById: vi.fn(),
+}));
+
+vi.mock('../services/rentalRequestService.js', () => ({
+  createRentalRequest: vi.fn(),
+  getMyRentalRequests: vi.fn(),
 }));
 
 const apartment = {
@@ -30,6 +45,20 @@ const apartment = {
   imageUrl: 'https://example.test/apartment.jpg',
   createdAt: '2026-07-25T08:00:00.000Z',
   updatedAt: '2026-07-25T08:00:00.000Z',
+};
+
+const tenantUser = {
+  id: 21,
+  fullName: 'Hira Tenant',
+  email: 'hira.tenant@example.test',
+  role: 'tenant',
+};
+
+const ownerUser = {
+  id: 22,
+  fullName: 'Omar Owner',
+  email: 'omar.owner@example.test',
+  role: 'owner',
 };
 
 function propertyListResponse(overrides = {}) {
@@ -54,12 +83,22 @@ function renderProperties() {
   );
 }
 
-function renderPropertyDetails() {
+function renderPropertyDetails(user = null) {
+  if (user) {
+    saveStoredAuth({ token: `property-details-token-${user.id}`, user });
+    getAuthenticatedProfile.mockResolvedValue({
+      success: true,
+      data: { user },
+    });
+  }
+
   return render(
     <MemoryRouter initialEntries={['/properties/11']}>
-      <Routes>
-        <Route path="/properties/:id" element={<PropertyDetails />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/properties/:id" element={<PropertyDetails />} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -350,6 +389,137 @@ describe('Property details page', () => {
       '11',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+    expect(
+      screen.getByRole('link', { name: 'Log in to Send Request' }),
+    ).toHaveAttribute('href', '/login');
+  });
+
+  it('lets an authenticated tenant send a rental request', async () => {
+    const user = userEvent.setup();
+    getPropertyById.mockResolvedValue({
+      success: true,
+      data: { property: apartment },
+    });
+    createRentalRequest.mockResolvedValue({
+      success: true,
+      message: 'Rental request sent successfully.',
+      data: {
+        rentalRequest: {
+          id: 91,
+          propertyId: apartment.id,
+          tenantId: tenantUser.id,
+          ownerId: apartment.ownerId,
+          status: 'pending',
+        },
+      },
+    });
+
+    renderPropertyDetails(tenantUser);
+
+    await screen.findByRole('heading', { name: apartment.title });
+    await user.type(
+      await screen.findByLabelText('Message to property owner (optional)'),
+      'I would like to arrange a viewing.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Send Rental Request' }));
+
+    expect(createRentalRequest).toHaveBeenCalledWith({
+      propertyId: apartment.id,
+      message: 'I would like to arrange a viewing.',
+    });
+    expect(
+      await screen.findByText('Rental request sent successfully.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Request Sent' })).toBeDisabled();
+  });
+
+  it('shows a loading state while the rental request is being sent', async () => {
+    const user = userEvent.setup();
+    getPropertyById.mockResolvedValue({
+      success: true,
+      data: { property: apartment },
+    });
+    createRentalRequest.mockReturnValue(new Promise(() => {}));
+
+    renderPropertyDetails(tenantUser);
+    await screen.findByRole('heading', { name: apartment.title });
+    await user.click(
+      await screen.findByRole('button', { name: 'Send Rental Request' }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Sending Request...' }),
+    ).toBeDisabled();
+  });
+
+  it('shows the duplicate-pending-request response distinctly', async () => {
+    const user = userEvent.setup();
+    getPropertyById.mockResolvedValue({
+      success: true,
+      data: { property: apartment },
+    });
+    createRentalRequest.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          message: 'You already have a pending rental request for this property.',
+        },
+      },
+    });
+
+    renderPropertyDetails(tenantUser);
+    await user.click(
+      await screen.findByRole('button', { name: 'Send Rental Request' }),
+    );
+
+    const duplicateMessage = await screen.findByRole('alert');
+    expect(duplicateMessage).toHaveTextContent(
+      'You already have a pending rental request for this property.',
+    );
+    expect(duplicateMessage).toHaveClass('is-duplicate');
+  });
+
+  it('shows rental-request errors and keeps the tenant able to retry', async () => {
+    const user = userEvent.setup();
+    getPropertyById.mockResolvedValue({
+      success: true,
+      data: { property: apartment },
+    });
+    createRentalRequest.mockRejectedValue({
+      response: {
+        status: 503,
+        data: { message: 'Rental requests are temporarily unavailable.' },
+      },
+    });
+
+    renderPropertyDetails(tenantUser);
+    await user.click(
+      await screen.findByRole('button', { name: 'Send Rental Request' }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Rental requests are temporarily unavailable.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Send Rental Request' }),
+    ).toBeEnabled();
+  });
+
+  it('does not offer rental-request submission to property owners', async () => {
+    getPropertyById.mockResolvedValue({
+      success: true,
+      data: { property: apartment },
+    });
+
+    renderPropertyDetails(ownerUser);
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tenant access only' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Send Rental Request' }),
+    ).not.toBeInTheDocument();
+    expect(createRentalRequest).not.toHaveBeenCalled();
   });
 
   it('renders a property-specific 404 state', async () => {

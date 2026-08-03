@@ -1,9 +1,9 @@
 # RentEase – Smart Property Rental & Management System
 
 RentEase is a full-stack property rental project for tenants, property owners,
-and administrators. Phase 1 established secure authentication, while Phase 2
-Days 1–5 add public property discovery, complete listing details, a secure
-owner dashboard, owner property creation, and owner property management.
+and administrators. Phase 1 established secure authentication, Phase 2 added
+property discovery and owner property management, and Phase 3 Day 1 introduces
+basic tenant rental requests.
 
 ## Phase 1 Features
 
@@ -53,8 +53,6 @@ owner dashboard, owner property creation, and owner property management.
 - Immediate owner dashboard refresh after creation
 - Immediate public visibility for newly created available properties
 
-Rental requests and favorites remain reserved for later Phase 2 work.
-
 ## Phase 2 Day 5 Features
 
 - Owner-only property editing at `/owner/properties/edit/:id`
@@ -63,6 +61,18 @@ Rental requests and favorites remain reserved for later Phase 2 work.
 - Automatic dashboard refresh after editing or deleting
 - Automatic public-listing refresh after availability changes or deletion
 - Responsive edit, loading, success, error, and confirmation states
+
+## Phase 3 Day 1 Features
+
+- Tenant-only rental request creation for available, approved properties
+- JWT-derived tenant IDs and property-derived owner IDs
+- Duplicate pending-request prevention, including concurrent submissions
+- Tenant-scoped `my-requests` API
+- Optional owner message from the Property Details page
+- Loading, success, duplicate, and general error feedback
+
+Request approval, rejection, owner request dashboards, and admin request tools
+are intentionally reserved for later Phase 3 work.
 
 ## Technology Stack
 
@@ -171,6 +181,13 @@ migration:
 mysql -u root -p < server/database/phase2_day4.sql
 ```
 
+When upgrading an existing Phase 2 database for Phase 3 Day 1, apply the rental
+request migration:
+
+```bash
+mysql -u root -p < server/database/phase3_day1.sql
+```
+
 The `users` table stores the user's name, email, bcrypt password hash, role, and
 timestamps. Supported roles are `tenant`, `owner`, and `admin`.
 
@@ -266,6 +283,18 @@ returns the safe owner profile, dynamic statistics, and only that owner's
 properties. Active listings are approved and available. Recently added
 properties are those created during the previous seven days.
 
+## Rental Requests API
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| POST | `/api/rental-requests` | Authenticated tenant |
+| GET | `/api/rental-requests/my-requests` | Authenticated tenant |
+
+Create requests accept `propertyId` and an optional `message`. The server takes
+the tenant ID from the verified JWT, takes the owner ID from the property, and
+accepts only approved properties whose availability status is `available`.
+Duplicate pending requests for the same tenant and property are rejected.
+
 ## Testing
 
 Run all tests:
@@ -292,9 +321,11 @@ routes, role authorization, frontend validation, session restoration, logout,
 property discovery queries, pagination, property details, owner isolation,
 dashboard statistics, property creation, creation-role enforcement, immediate
 listing visibility, property editing, property deletion, ownership isolation,
-owner-only routing, and dashboard UI states.
+owner-only routing, dashboard UI states, rental-request role enforcement,
+duplicate prevention, tenant isolation, and rental-request UI feedback.
 
 ## Current Scope
 
-Authentication and Phase 2 Days 1–5 are included. Rental requests, favorites,
-and tenant or admin dashboards are not included yet.
+Authentication, Phase 2 Days 1–5, and the Phase 3 Day 1 basic rental-request
+module are included. Request decisions, request dashboards, favorites, and
+tenant or admin dashboards are not included yet.

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import PropertyImage from '../components/PropertyImage.jsx';
+import RentalRequestPanel from '../components/RentalRequestPanel.jsx';
 import { getPropertyById } from '../services/propertyService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
 import {
@@ -242,6 +243,7 @@ function PropertyDetails() {
                   <dd>{formatPropertyDate(property.createdAt)}</dd>
                 </div>
               </dl>
+              <RentalRequestPanel key={property.id} property={property} />
             </aside>
           </div>
         </div>

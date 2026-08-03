@@ -109,18 +109,15 @@ CREATE TABLE IF NOT EXISTS rental_requests (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   property_id BIGINT UNSIGNED NOT NULL,
   tenant_id BIGINT UNSIGNED NOT NULL,
-  move_in_date DATE NULL,
-  message VARCHAR(1000) NULL,
+  owner_id BIGINT UNSIGNED NOT NULL,
   status ENUM('pending', 'approved', 'rejected', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
-  owner_response VARCHAR(1000) NULL,
-  responded_at TIMESTAMP NULL,
+  message VARCHAR(1000) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  active_property_id BIGINT UNSIGNED NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_rental_requests_active (tenant_id, active_property_id),
   KEY idx_rental_requests_property_status (property_id, status),
   KEY idx_rental_requests_tenant_status (tenant_id, status),
+  KEY idx_rental_requests_owner_status (owner_id, status),
   CONSTRAINT fk_rental_requests_property
     FOREIGN KEY (property_id) REFERENCES properties (id)
     ON UPDATE CASCADE
@@ -128,34 +125,12 @@ CREATE TABLE IF NOT EXISTS rental_requests (
   CONSTRAINT fk_rental_requests_tenant
     FOREIGN KEY (tenant_id) REFERENCES users (id)
     ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  CONSTRAINT fk_rental_requests_owner
+    FOREIGN KEY (owner_id) REFERENCES users (id)
+    ON UPDATE CASCADE
     ON DELETE RESTRICT
 ) ENGINE=InnoDB;
-
-DELIMITER //
-
-CREATE TRIGGER trg_rental_requests_before_insert
-BEFORE INSERT ON rental_requests
-FOR EACH ROW
-BEGIN
-  IF NEW.status IN ('pending', 'approved') THEN
-    SET NEW.active_property_id = NEW.property_id;
-  ELSE
-    SET NEW.active_property_id = NULL;
-  END IF;
-END//
-
-CREATE TRIGGER trg_rental_requests_before_update
-BEFORE UPDATE ON rental_requests
-FOR EACH ROW
-BEGIN
-  IF NEW.status IN ('pending', 'approved') THEN
-    SET NEW.active_property_id = NEW.property_id;
-  ELSE
-    SET NEW.active_property_id = NULL;
-  END IF;
-END//
-
-DELIMITER ;
 
 CREATE TABLE IF NOT EXISTS contact_messages (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
