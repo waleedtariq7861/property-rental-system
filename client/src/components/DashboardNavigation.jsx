@@ -20,6 +20,12 @@ const navigationItems = [
     kind: 'route',
   },
   {
+    label: 'Rental Requests',
+    icon: 'bi-inbox-fill',
+    to: '/owner/requests',
+    kind: 'route',
+  },
+  {
     label: 'Browse Properties',
     icon: 'bi-search',
     to: '/properties',

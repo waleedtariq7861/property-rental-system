@@ -2,6 +2,8 @@ import { Router } from 'express';
 import {
   createRentalRequest,
   getMyRentalRequests,
+  getOwnerRentalRequests,
+  updateOwnerRentalRequestStatus,
 } from '../controllers/rentalRequestController.js';
 import {
   authenticate,
@@ -13,9 +15,26 @@ import asyncHandler from '../utils/asyncHandler.js';
 const router = Router();
 
 router.use(asyncHandler(authenticate));
-router.use(authorizeRoles(USER_ROLES.TENANT));
 
-router.post('/', asyncHandler(createRentalRequest));
-router.get('/my-requests', asyncHandler(getMyRentalRequests));
+router.post(
+  '/',
+  authorizeRoles(USER_ROLES.TENANT),
+  asyncHandler(createRentalRequest),
+);
+router.get(
+  '/my-requests',
+  authorizeRoles(USER_ROLES.TENANT),
+  asyncHandler(getMyRentalRequests),
+);
+router.get(
+  '/owner-requests',
+  authorizeRoles(USER_ROLES.OWNER),
+  asyncHandler(getOwnerRentalRequests),
+);
+router.patch(
+  '/:requestId/status',
+  authorizeRoles(USER_ROLES.OWNER),
+  asyncHandler(updateOwnerRentalRequestStatus),
+);
 
 export default router;

@@ -2,8 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, Phase 2 added
-property discovery and owner property management, and Phase 3 Day 1 introduces
-basic tenant rental requests.
+property discovery and owner property management, and Phase 3 adds tenant
+rental requests plus owner request decisions.
 
 ## Phase 1 Features
 
@@ -71,8 +71,17 @@ basic tenant rental requests.
 - Optional owner message from the Property Details page
 - Loading, success, duplicate, and general error feedback
 
-Request approval, rejection, owner request dashboards, and admin request tools
-are intentionally reserved for later Phase 3 work.
+## Phase 3 Day 2 Features
+
+- Owner-only rental request inbox at `/owner/requests`
+- Tenant, property, request date, message, and current-status details
+- Secure accept and reject actions for pending requests
+- Property-ownership isolation on request reads and updates
+- Transactional pending-to-approved or pending-to-rejected status changes
+- Responsive loading, empty, success, and error states
+
+Tenant dashboards and admin dashboards are intentionally reserved for later
+Phase 3 work.
 
 ## Technology Stack
 
@@ -289,11 +298,17 @@ properties are those created during the previous seven days.
 | --- | --- | --- |
 | POST | `/api/rental-requests` | Authenticated tenant |
 | GET | `/api/rental-requests/my-requests` | Authenticated tenant |
+| GET | `/api/rental-requests/owner-requests` | Authenticated owner |
+| PATCH | `/api/rental-requests/:requestId/status` | Authenticated owner of the request property |
 
 Create requests accept `propertyId` and an optional `message`. The server takes
 the tenant ID from the verified JWT, takes the owner ID from the property, and
 accepts only approved properties whose availability status is `available`.
 Duplicate pending requests for the same tenant and property are rejected.
+The owner list returns requests only when both the saved request owner and the
+current property owner match the authenticated owner. Status updates accept
+only `approved` or `rejected`, lock the request while deciding it, and reject
+repeat decisions once a request is no longer pending.
 
 ## Testing
 
@@ -322,10 +337,11 @@ property discovery queries, pagination, property details, owner isolation,
 dashboard statistics, property creation, creation-role enforcement, immediate
 listing visibility, property editing, property deletion, ownership isolation,
 owner-only routing, dashboard UI states, rental-request role enforcement,
-duplicate prevention, tenant isolation, and rental-request UI feedback.
+duplicate prevention, tenant isolation, owner-property request isolation,
+pending-only accept and reject decisions, and rental-request UI feedback.
 
 ## Current Scope
 
-Authentication, Phase 2 Days 1–5, and the Phase 3 Day 1 basic rental-request
-module are included. Request decisions, request dashboards, favorites, and
-tenant or admin dashboards are not included yet.
+Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–2 rental-request creation
+and owner management are included. Favorites and tenant or admin dashboards are
+not included yet.

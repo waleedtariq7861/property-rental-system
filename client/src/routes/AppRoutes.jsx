@@ -9,6 +9,7 @@ import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
 import NotFound from '../pages/NotFound.jsx';
 import OwnerDashboard from '../pages/OwnerDashboard.jsx';
+import OwnerRequests from '../pages/OwnerRequests.jsx';
 import Properties from '../pages/Properties.jsx';
 import PropertyDetails from '../pages/PropertyDetails.jsx';
 import Profile from '../pages/Profile.jsx';
@@ -36,6 +37,7 @@ function AppRoutes() {
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
           <Route path="owner/dashboard" element={<OwnerDashboard />} />
+          <Route path="owner/requests" element={<OwnerRequests />} />
           <Route path="owner/properties/add" element={<AddProperty />} />
           <Route path="owner/properties/edit/:id" element={<EditProperty />} />
           <Route path="owner-access" element={<RoleAccess role="owner" />} />

@@ -2,6 +2,7 @@ import ApiError from './ApiError.js';
 
 const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
 const MAX_MESSAGE_LENGTH = 1000;
+const OWNER_DECISION_STATUSES = new Set(['approved', 'rejected']);
 
 function normalizePropertyId(value, details) {
   const normalizedValue =
@@ -59,4 +60,37 @@ export function validateCreateRentalRequestPayload(payload = {}) {
   }
 
   return { propertyId, message };
+}
+
+export function validateRentalRequestId(value) {
+  const normalizedValue = typeof value === 'string' ? value.trim() : '';
+  const requestId = Number(normalizedValue);
+
+  if (
+    !POSITIVE_INTEGER_PATTERN.test(normalizedValue) ||
+    !Number.isSafeInteger(requestId)
+  ) {
+    throw new ApiError(400, 'Validation failed', {
+      requestId: 'Rental request ID must be a positive integer.',
+    });
+  }
+
+  return requestId;
+}
+
+export function validateOwnerRentalRequestDecision(payload = {}) {
+  const source =
+    payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? payload
+      : {};
+  const status =
+    typeof source.status === 'string' ? source.status.trim().toLowerCase() : '';
+
+  if (!OWNER_DECISION_STATUSES.has(status)) {
+    throw new ApiError(400, 'Validation failed', {
+      status: 'Status must be approved or rejected.',
+    });
+  }
+
+  return { status };
 }
