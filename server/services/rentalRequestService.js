@@ -13,6 +13,7 @@ const RENTAL_REQUEST_FIELDS = `
   p.title AS propertyTitle,
   p.city AS propertyCity,
   p.price AS propertyPrice,
+  p.property_type AS propertyType,
   p.image_url AS propertyImageUrl,
   u.full_name AS ownerName
 `;
@@ -27,7 +28,13 @@ const OWNER_RENTAL_REQUEST_FIELDS = `
   rr.created_at AS createdAt,
   rr.updated_at AS updatedAt,
   p.title AS propertyTitle,
-  tenant.full_name AS tenantName
+  p.city AS propertyCity,
+  p.price AS propertyPrice,
+  p.property_type AS propertyType,
+  p.image_url AS propertyImageUrl,
+  tenant.full_name AS tenantName,
+  tenant.email AS tenantEmail,
+  tenant.phone AS tenantPhone
 `;
 
 async function findRentalRequestById(connection, requestId, tenantId) {
@@ -143,6 +150,57 @@ export async function findTenantRentalRequests(tenantId) {
   );
 
   return rows;
+}
+
+export async function cancelTenantRentalRequest(tenantId, requestId) {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [rows] = await connection.execute(
+      `
+        SELECT status
+        FROM rental_requests
+        WHERE id = ? AND tenant_id = ?
+        LIMIT 1
+        FOR UPDATE
+      `,
+      [requestId, tenantId],
+    );
+    const rentalRequest = rows[0];
+
+    if (!rentalRequest) {
+      throw new ApiError(404, 'Rental request not found.');
+    }
+
+    if (rentalRequest.status !== 'pending') {
+      throw new ApiError(409, 'Only pending rental requests can be cancelled.');
+    }
+
+    await connection.execute(
+      `
+        UPDATE rental_requests
+        SET status = 'cancelled'
+        WHERE id = ? AND tenant_id = ? AND status = 'pending'
+      `,
+      [requestId, tenantId],
+    );
+
+    const cancelledRequest = await findRentalRequestById(
+      connection,
+      requestId,
+      tenantId,
+    );
+
+    await connection.commit();
+    return cancelledRequest;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 async function findOwnerRentalRequestById(connection, requestId, ownerId) {

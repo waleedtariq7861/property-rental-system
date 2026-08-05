@@ -2,8 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, Phase 2 added
-property discovery and owner property management, and Phase 3 adds tenant
-rental requests plus owner request decisions.
+property discovery and owner property management, and Phase 3 adds the tenant
+rental request workflow plus owner request decisions.
 
 ## Phase 1 Features
 
@@ -74,14 +74,26 @@ rental requests plus owner request decisions.
 ## Phase 3 Day 2 Features
 
 - Owner-only rental request inbox at `/owner/requests`
-- Tenant, property, request date, message, and current-status details
+- Tenant contact, property, request date, message, and current-status details
 - Secure accept and reject actions for pending requests
 - Property-ownership isolation on request reads and updates
 - Transactional pending-to-approved or pending-to-rejected status changes
+- Tenant/property/message search and request-status filters
 - Responsive loading, empty, success, and error states
 
-Tenant dashboards and admin dashboards are intentionally reserved for later
-Phase 3 work.
+## Phase 3 Day 3 Features
+
+- Tenant-only rental dashboard at `/tenant/dashboard`
+- Total, pending, accepted, and rejected request summaries
+- Property, owner, request-date, message, and current-status details
+- Secure cancellation for the authenticated tenant's pending requests only
+- Transactional pending-to-cancelled status changes
+- Property/owner/message search and request-status filters
+- Recent activity feed ordered by the latest request update
+- Responsive loading, empty, success, and error states
+
+The Admin Dashboard and Phase 3 Days 4–5 features are intentionally reserved
+for later work.
 
 ## Technology Stack
 
@@ -298,6 +310,7 @@ properties are those created during the previous seven days.
 | --- | --- | --- |
 | POST | `/api/rental-requests` | Authenticated tenant |
 | GET | `/api/rental-requests/my-requests` | Authenticated tenant |
+| PATCH | `/api/rental-requests/:requestId/cancel` | Authenticated tenant who created the request |
 | GET | `/api/rental-requests/owner-requests` | Authenticated owner |
 | PATCH | `/api/rental-requests/:requestId/status` | Authenticated owner of the request property |
 
@@ -309,6 +322,9 @@ The owner list returns requests only when both the saved request owner and the
 current property owner match the authenticated owner. Status updates accept
 only `approved` or `rejected`, lock the request while deciding it, and reject
 repeat decisions once a request is no longer pending.
+Tenant cancellation derives the tenant ID from the verified JWT, locks the
+owned request while updating it, and permits only a `pending` to `cancelled`
+transition.
 
 ## Testing
 
@@ -338,10 +354,11 @@ dashboard statistics, property creation, creation-role enforcement, immediate
 listing visibility, property editing, property deletion, ownership isolation,
 owner-only routing, dashboard UI states, rental-request role enforcement,
 duplicate prevention, tenant isolation, owner-property request isolation,
-pending-only accept and reject decisions, and rental-request UI feedback.
+pending-only accept and reject decisions, tenant dashboard summaries,
+pending-only cancellation, and rental-request UI feedback.
 
 ## Current Scope
 
-Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–2 rental-request creation
-and owner management are included. Favorites and tenant or admin dashboards are
-not included yet.
+Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–3 rental-request creation,
+owner management, and the Tenant Dashboard are included. Favorites, the Admin
+Dashboard, and Phase 3 Days 4–5 are not included yet.

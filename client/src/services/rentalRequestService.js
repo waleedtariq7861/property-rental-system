@@ -13,6 +13,15 @@ export async function getMyRentalRequests(options = {}) {
   return response.data;
 }
 
+export async function cancelRentalRequest(requestId, options = {}) {
+  const response = await apiClient.patch(
+    `/rental-requests/${requestId}/cancel`,
+    {},
+    options,
+  );
+  return response.data;
+}
+
 export async function getOwnerRentalRequests(options = {}) {
   const response = await apiClient.get(
     '/rental-requests/owner-requests',

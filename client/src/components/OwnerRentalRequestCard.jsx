@@ -1,9 +1,13 @@
 import LoadingSpinner from './LoadingSpinner.jsx';
-import { formatPropertyDate } from '../utils/propertyFormatting.js';
+import {
+  formatPropertyDate,
+  formatPropertyType,
+  propertyPriceFormatter,
+} from '../utils/propertyFormatting.js';
 
 const STATUS_LABELS = Object.freeze({
   pending: 'Pending',
-  approved: 'Approved',
+  approved: 'Accepted',
   rejected: 'Rejected',
   cancelled: 'Cancelled',
   completed: 'Completed',
@@ -31,6 +35,18 @@ function OwnerRentalRequestCard({
         <div>
           <span className="owner-request-label">Rental request from</span>
           <h2 id={headingId}>{rentalRequest.tenantName}</h2>
+          <div className="owner-request-tenant-contact">
+            <a href={`mailto:${rentalRequest.tenantEmail}`}>
+              <i className="bi bi-envelope" aria-hidden="true" />
+              {rentalRequest.tenantEmail}
+            </a>
+            {rentalRequest.tenantPhone && (
+              <a href={`tel:${rentalRequest.tenantPhone}`}>
+                <i className="bi bi-telephone" aria-hidden="true" />
+                {rentalRequest.tenantPhone}
+              </a>
+            )}
+          </div>
         </div>
         <span
           className={`owner-request-status is-${rentalRequest.status}`}
@@ -47,6 +63,27 @@ function OwnerRentalRequestCard({
             Property
           </dt>
           <dd>{rentalRequest.propertyTitle}</dd>
+        </div>
+        <div>
+          <dt>
+            <i className="bi bi-geo-alt-fill" aria-hidden="true" />
+            Location
+          </dt>
+          <dd>{rentalRequest.propertyCity}</dd>
+        </div>
+        <div>
+          <dt>
+            <i className="bi bi-building" aria-hidden="true" />
+            Property type
+          </dt>
+          <dd>{formatPropertyType(rentalRequest.propertyType)}</dd>
+        </div>
+        <div>
+          <dt>
+            <i className="bi bi-cash-stack" aria-hidden="true" />
+            Monthly rent
+          </dt>
+          <dd>{propertyPriceFormatter.format(rentalRequest.propertyPrice)}</dd>
         </div>
         <div>
           <dt>

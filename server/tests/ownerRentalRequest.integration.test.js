@@ -264,8 +264,22 @@ describe('Owner rental request management API', { concurrency: false }, () => {
       'Owner Workflow Tenant',
     );
     assert.equal(
+      response.body.data.rentalRequests[0].tenantEmail,
+      emails.tenant,
+    );
+    assert.equal(response.body.data.rentalRequests[0].tenantPhone, null);
+    assert.equal(
       response.body.data.rentalRequests[0].propertyTitle,
       'Owner Request Apartment',
+    );
+    assert.equal(response.body.data.rentalRequests[0].propertyCity, 'Islamabad');
+    assert.equal(
+      Number(response.body.data.rentalRequests[0].propertyPrice),
+      95000,
+    );
+    assert.equal(
+      response.body.data.rentalRequests[0].propertyType,
+      'apartment',
     );
     assert.equal(typeof response.body.data.rentalRequests[0].createdAt, 'string');
     assert.equal(

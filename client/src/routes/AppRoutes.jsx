@@ -16,6 +16,7 @@ import Profile from '../pages/Profile.jsx';
 import Register from '../pages/Register.jsx';
 import RoleAccess from '../pages/RoleAccess.jsx';
 import SystemStatus from '../pages/SystemStatus.jsx';
+import TenantDashboard from '../pages/TenantDashboard.jsx';
 import Unauthorized from '../pages/Unauthorized.jsx';
 
 function AppRoutes() {
@@ -41,6 +42,9 @@ function AppRoutes() {
           <Route path="owner/properties/add" element={<AddProperty />} />
           <Route path="owner/properties/edit/:id" element={<EditProperty />} />
           <Route path="owner-access" element={<RoleAccess role="owner" />} />
+        </Route>
+        <Route element={<ProtectedRoute allowedRoles={['tenant']} />}>
+          <Route path="tenant/dashboard" element={<TenantDashboard />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="admin-access" element={<RoleAccess role="admin" />} />

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  cancelTenantRentalRequest,
   createRentalRequest,
   getMyRentalRequests,
   getOwnerRentalRequests,
@@ -25,6 +26,11 @@ router.get(
   '/my-requests',
   authorizeRoles(USER_ROLES.TENANT),
   asyncHandler(getMyRentalRequests),
+);
+router.patch(
+  '/:requestId/cancel',
+  authorizeRoles(USER_ROLES.TENANT),
+  asyncHandler(cancelTenantRentalRequest),
 );
 router.get(
   '/owner-requests',

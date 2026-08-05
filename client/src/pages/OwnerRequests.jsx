@@ -1,16 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DashboardMobileNavigation,
   DashboardSidebar,
 } from '../components/DashboardNavigation.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import OwnerRentalRequestCard from '../components/OwnerRentalRequestCard.jsx';
+import RentalRequestToolbar from '../components/RentalRequestToolbar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   getOwnerRentalRequests,
   updateOwnerRentalRequestStatus,
 } from '../services/rentalRequestService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
+
+const OWNER_STATUS_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Accepted' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 function isOwnerRequestsResponse(data) {
   return (
@@ -19,7 +28,11 @@ function isOwnerRequestsResponse(data) {
       (rentalRequest) =>
         Number.isFinite(Number(rentalRequest?.id)) &&
         typeof rentalRequest?.tenantName === 'string' &&
+        typeof rentalRequest?.tenantEmail === 'string' &&
         typeof rentalRequest?.propertyTitle === 'string' &&
+        typeof rentalRequest?.propertyCity === 'string' &&
+        Number.isFinite(Number(rentalRequest?.propertyPrice)) &&
+        typeof rentalRequest?.propertyType === 'string' &&
         typeof rentalRequest?.status === 'string' &&
         typeof rentalRequest?.createdAt === 'string',
     )
@@ -35,6 +48,30 @@ function OwnerRequests() {
   const [requestKey, setRequestKey] = useState(0);
   const [updatingRequestId, setUpdatingRequestId] = useState(null);
   const [pendingStatus, setPendingStatus] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const filteredRequests = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return rentalRequests.filter((rentalRequest) => {
+      const matchesStatus =
+        statusFilter === 'all' || rentalRequest.status === statusFilter;
+      const searchableContent = [
+        rentalRequest.tenantName,
+        rentalRequest.tenantEmail,
+        rentalRequest.tenantPhone,
+        rentalRequest.propertyTitle,
+        rentalRequest.propertyCity,
+        rentalRequest.propertyType,
+        rentalRequest.message,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return matchesStatus && searchableContent.includes(normalizedSearch);
+    });
+  }, [rentalRequests, searchTerm, statusFilter]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -209,8 +246,8 @@ function OwnerRequests() {
                     <h2 id="owner-requests-heading">Property Requests</h2>
                   </div>
                   <span className="owner-property-count">
-                    {rentalRequests.length}{' '}
-                    {rentalRequests.length === 1 ? 'request' : 'requests'}
+                    {filteredRequests.length}{' '}
+                    {filteredRequests.length === 1 ? 'request' : 'requests'}
                   </span>
                 </div>
 
@@ -228,18 +265,61 @@ function OwnerRequests() {
                     </p>
                   </div>
                 ) : (
-                  <div className="owner-request-grid">
-                    {rentalRequests.map((rentalRequest) => (
-                      <OwnerRentalRequestCard
-                        isDecisionDisabled={updatingRequestId !== null}
-                        isUpdating={updatingRequestId === rentalRequest.id}
-                        key={rentalRequest.id}
-                        onDecision={handleDecision}
-                        pendingStatus={pendingStatus}
-                        rentalRequest={rentalRequest}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <RentalRequestToolbar
+                      idPrefix="owner-requests"
+                      onClear={() => {
+                        setSearchTerm('');
+                        setStatusFilter('all');
+                      }}
+                      onSearchChange={setSearchTerm}
+                      onStatusChange={setStatusFilter}
+                      resultCount={filteredRequests.length}
+                      searchPlaceholder="Search tenant, property, city, or message"
+                      searchTerm={searchTerm}
+                      statusFilter={statusFilter}
+                      statusOptions={OWNER_STATUS_OPTIONS}
+                      totalCount={rentalRequests.length}
+                    />
+
+                    {filteredRequests.length === 0 ? (
+                      <div className="owner-dashboard-state rental-request-filter-empty">
+                        <span
+                          className="owner-dashboard-state-icon"
+                          aria-hidden="true"
+                        >
+                          <i className="bi bi-search" />
+                        </span>
+                        <h3>No matching requests</h3>
+                        <p>
+                          Try another tenant, property, or request status.
+                        </p>
+                        <button
+                          className="btn btn-brand"
+                          onClick={() => {
+                            setSearchTerm('');
+                            setStatusFilter('all');
+                          }}
+                          type="button"
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="owner-request-grid">
+                        {filteredRequests.map((rentalRequest) => (
+                          <OwnerRentalRequestCard
+                            isDecisionDisabled={updatingRequestId !== null}
+                            isUpdating={updatingRequestId === rentalRequest.id}
+                            key={rentalRequest.id}
+                            onDecision={handleDecision}
+                            pendingStatus={pendingStatus}
+                            rentalRequest={rentalRequest}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </section>
             )}

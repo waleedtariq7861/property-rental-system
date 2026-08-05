@@ -1,4 +1,5 @@
 import {
+  cancelTenantRentalRequest as cancelTenantRentalRequestRecord,
   createRentalRequest as createRentalRequestRecord,
   findOwnerRentalRequests,
   findTenantRentalRequests,
@@ -42,6 +43,27 @@ export async function getMyRentalRequests(request, response) {
       rentalRequests,
       count: rentalRequests.length,
     },
+  });
+}
+
+export async function cancelTenantRentalRequest(request, response) {
+  const requestId = validateRentalRequestId(request.params.requestId);
+  const rentalRequest = await cancelTenantRentalRequestRecord(
+    request.user.id,
+    requestId,
+  );
+
+  if (!rentalRequest) {
+    throw new ApiError(
+      500,
+      'Rental request was cancelled, but the saved record could not be loaded.',
+    );
+  }
+
+  return response.status(200).json({
+    success: true,
+    message: 'Rental request cancelled successfully.',
+    data: { rentalRequest },
   });
 }
 
