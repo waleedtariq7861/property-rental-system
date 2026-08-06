@@ -80,6 +80,13 @@ function Navbar() {
                     </NavLink>
                   </li>
                 )}
+                {currentUser.role === 'admin' && (
+                  <li className="nav-item ms-lg-2">
+                    <NavLink className="nav-link" to="/admin/dashboard">
+                      Dashboard
+                    </NavLink>
+                  </li>
+                )}
                 <li className="nav-item ms-lg-2">
                   <NavLink className="nav-link" to="/profile">
                     {currentUser.fullName}

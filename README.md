@@ -92,8 +92,18 @@ rental request workflow plus owner request decisions.
 - Recent activity feed ordered by the latest request update
 - Responsive loading, empty, success, and error states
 
-The Admin Dashboard and Phase 3 Days 4–5 features are intentionally reserved
-for later work.
+## Phase 3 Day 4 Features
+
+- Admin-only dashboard at `/admin/dashboard`
+- Total user, owner, tenant, property, and rental-request statistics
+- Recent users, properties, and rental-request activity panels
+- Read-only user directory with account details, search, and role/status filters
+- Read-only property inventory with owner/listing details and combined filters
+- Read-only rental-request register with tenant, owner, property, and status details
+- Current database-role verification on every admin API
+- Responsive loading, empty, success, and error states
+
+Phase 3 Day 5 administrative actions are intentionally reserved for later work.
 
 ## Technology Stack
 
@@ -326,6 +336,19 @@ Tenant cancellation derives the tenant ID from the verified JWT, locks the
 owned request while updating it, and permits only a `pending` to `cancelled`
 transition.
 
+## Admin Dashboard API
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| GET | `/api/admin/dashboard` | Authenticated admin |
+| GET | `/api/admin/users` | Authenticated admin |
+| GET | `/api/admin/properties` | Authenticated admin |
+| GET | `/api/admin/rental-requests` | Authenticated admin |
+
+Admin endpoints reload the current account from the database before checking
+its role. They expose safe account fields and read-only platform data; no user,
+property, or rental-request mutation actions are included in Day 4.
+
 ## Testing
 
 Run all tests:
@@ -355,10 +378,13 @@ listing visibility, property editing, property deletion, ownership isolation,
 owner-only routing, dashboard UI states, rental-request role enforcement,
 duplicate prevention, tenant isolation, owner-property request isolation,
 pending-only accept and reject decisions, tenant dashboard summaries,
-pending-only cancellation, and rental-request UI feedback.
+pending-only cancellation, rental-request UI feedback, admin-only API access,
+safe user reporting, platform statistics, recent admin activity panels, and
+admin directory search and filters.
 
 ## Current Scope
 
-Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–3 rental-request creation,
-owner management, and the Tenant Dashboard are included. Favorites, the Admin
-Dashboard, and Phase 3 Days 4–5 are not included yet.
+Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–4 rental-request creation,
+owner management, the Tenant Dashboard, and the read-only Admin Dashboard are
+included. Favorites and Phase 3 Day 5 administrative actions are not included
+yet.

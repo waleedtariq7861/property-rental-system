@@ -3,6 +3,7 @@ import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import MainLayout from '../layouts/MainLayout.jsx';
 import About from '../pages/About.jsx';
 import AddProperty from '../pages/AddProperty.jsx';
+import AdminDashboard from '../pages/AdminDashboard.jsx';
 import Contact from '../pages/Contact.jsx';
 import EditProperty from '../pages/EditProperty.jsx';
 import Home from '../pages/Home.jsx';
@@ -47,6 +48,7 @@ function AppRoutes() {
           <Route path="tenant/dashboard" element={<TenantDashboard />} />
         </Route>
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="admin-access" element={<RoleAccess role="admin" />} />
         </Route>
         {showDevelopmentRoutes && (
