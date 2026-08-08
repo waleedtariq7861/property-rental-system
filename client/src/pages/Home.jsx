@@ -56,7 +56,7 @@ const howItWorks = [
   {
     icon: 'bi-person-check',
     title: 'Connect with Owner',
-    description: 'Keep communication organized while the project grows into full rental workflows.',
+    description: 'Track each request while property owners review and respond to your interest.',
   },
 ];
 
@@ -142,9 +142,9 @@ const featuredProperties = [
 
 const defaultSearch = {
   city: 'Islamabad',
-  propertyType: 'Apartment',
-  minRent: '',
-  maxRent: '',
+  propertyType: 'apartment',
+  minPrice: '',
+  maxPrice: '',
 };
 
 function Home() {
@@ -153,7 +153,7 @@ function Home() {
 
   function handleChange(event) {
     const { name, value } = event.target;
-    const nextValue = name === 'minRent' || name === 'maxRent'
+    const nextValue = name === 'minPrice' || name === 'maxPrice'
       ? sanitizeDigits(value)
       : value;
     setSearchValues((currentValues) => ({
@@ -249,11 +249,11 @@ function Home() {
                     value={searchValues.propertyType}
                     onChange={handleChange}
                   >
-                    <option value="House">House</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Room">Room</option>
-                    <option value="Office">Office</option>
-                    <option value="Shop">Shop</option>
+                    <option value="house">House</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="room">Room</option>
+                    <option value="office">Office</option>
+                    <option value="shop">Shop</option>
                   </select>
                 </div>
 
@@ -264,13 +264,13 @@ function Home() {
                   <input
                     className="form-control"
                     id="searchMinRent"
-                    name="minRent"
+                    name="minPrice"
                     inputMode="numeric"
                     maxLength={9}
                     pattern="[0-9]*"
                     placeholder="e.g. 50000"
                     type="text"
-                    value={searchValues.minRent}
+                    value={searchValues.minPrice}
                     onChange={handleChange}
                   />
                 </div>
@@ -282,13 +282,13 @@ function Home() {
                   <input
                     className="form-control"
                     id="searchMaxRent"
-                    name="maxRent"
+                    name="maxPrice"
                     inputMode="numeric"
                     maxLength={9}
                     pattern="[0-9]*"
                     placeholder="e.g. 150000"
                     type="text"
-                    value={searchValues.maxRent}
+                    value={searchValues.maxPrice}
                     onChange={handleChange}
                   />
                 </div>
@@ -301,9 +301,8 @@ function Home() {
 
                 <div className="col-12">
                   <p className="search-panel-note mb-0">
-                    Property search is being prepared for the next module. For
-                    now, this search opens a temporary browsing page with your
-                    selected filters.
+                    Search opens the live property directory with your selected
+                    city, property type, and rent range already applied.
                   </p>
                 </div>
               </form>
@@ -370,8 +369,8 @@ function Home() {
             <span className="section-label">Featured Properties</span>
             <h2 className="display-6 fw-bold mt-2">Handpicked property ideas</h2>
             <p className="section-intro mx-auto mb-0">
-              Sample listings help the interface feel like a real rental platform
-              while the property module is still being prepared.
+              Explore representative listings, then open the live directory for
+              current availability and complete property details.
             </p>
           </div>
 
@@ -457,8 +456,8 @@ function Home() {
               <span className="section-label">Why choose RentEase</span>
               <h2 className="display-6 fw-bold mt-2 mb-3">Built around practical rental needs</h2>
               <p className="section-intro mb-0">
-                The foundation is intentionally simple, so the project can grow
-                into a clear and maintainable property platform in later phases.
+                Property discovery, rental requests, owner decisions, and secure
+                administration now work together in one maintainable platform.
               </p>
             </div>
             <div className="col-lg-7">

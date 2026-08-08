@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import {
+  deleteAdminProperty,
+  deleteAdminUser,
   getAdminDashboard,
   getAdminProperties,
   getAdminRentalRequests,
   getAdminUsers,
+  updateAdminUserStatus,
 } from '../controllers/adminDashboardController.js';
 import {
   authenticate,
@@ -21,5 +24,8 @@ router.get('/dashboard', asyncHandler(getAdminDashboard));
 router.get('/users', asyncHandler(getAdminUsers));
 router.get('/properties', asyncHandler(getAdminProperties));
 router.get('/rental-requests', asyncHandler(getAdminRentalRequests));
+router.patch('/users/:id/status', asyncHandler(updateAdminUserStatus));
+router.delete('/users/:id', asyncHandler(deleteAdminUser));
+router.delete('/properties/:id', asyncHandler(deleteAdminProperty));
 
 export default router;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import FilterPanel from '../components/FilterPanel.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import Pagination from '../components/Pagination.jsx';
@@ -23,11 +24,48 @@ const emptyFilters = Object.freeze({
   bedrooms: '',
 });
 
+const PROPERTY_TYPES = new Set([
+  'apartment',
+  'house',
+  'villa',
+  'office',
+  'studio',
+  'portion',
+  'room',
+  'shop',
+]);
+
+function readInitialDiscovery(searchParams) {
+  const propertyType = (searchParams.get('propertyType') || '').toLowerCase();
+  const minPrice = searchParams.get('minPrice') || '';
+  const maxPrice = searchParams.get('maxPrice') || '';
+
+  return {
+    searchTerm: searchParams.get('search') || '',
+    filters: {
+      city: searchParams.get('city') || '',
+      propertyType: PROPERTY_TYPES.has(propertyType) ? propertyType : '',
+      minPrice: /^\d+(?:\.\d{1,2})?$/.test(minPrice) ? minPrice : '',
+      maxPrice: /^\d+(?:\.\d{1,2})?$/.test(maxPrice) ? maxPrice : '',
+      bedrooms: /^\d+$/.test(searchParams.get('bedrooms') || '')
+        ? searchParams.get('bedrooms')
+        : '',
+    },
+  };
+}
+
 function Properties() {
+  const [searchParams] = useSearchParams();
+  const initialDiscovery = useMemo(
+    () => readInitialDiscovery(searchParams),
+    [searchParams],
+  );
   const [properties, setProperties] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [filters, setFilters] = useState({ ...emptyFilters });
+  const [searchTerm, setSearchTerm] = useState(initialDiscovery.searchTerm);
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    initialDiscovery.searchTerm.trim(),
+  );
+  const [filters, setFilters] = useState(initialDiscovery.filters);
   const [sort, setSort] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);

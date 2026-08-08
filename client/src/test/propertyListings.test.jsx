@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext.jsx';
+import Home from '../pages/Home.jsx';
 import Properties from '../pages/Properties.jsx';
 import PropertyDetails from '../pages/PropertyDetails.jsx';
 import { getAuthenticatedProfile } from '../services/authService.js';
@@ -75,10 +76,21 @@ function propertyListResponse(overrides = {}) {
   };
 }
 
-function renderProperties() {
+function renderProperties(path = '/properties') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <Properties />
+    </MemoryRouter>,
+  );
+}
+
+function renderHomeSearch() {
+  return render(
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/properties" element={<Properties />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -145,6 +157,56 @@ describe('Property listings page', () => {
     expect(screen.getByRole('button', { name: 'Hide Details' })).toHaveAttribute(
       'aria-expanded',
       'true',
+    );
+  });
+
+  it('applies homepage search criteria when opening the property directory', async () => {
+    const user = userEvent.setup();
+    getProperties.mockResolvedValue(propertyListResponse());
+
+    renderHomeSearch();
+
+    await user.type(screen.getByLabelText('Minimum Rent'), '50000');
+    await user.type(screen.getByLabelText('Maximum Rent'), '100000');
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    await screen.findByRole('heading', { name: apartment.title });
+    expect(screen.getByLabelText('City')).toHaveValue('Islamabad');
+    expect(screen.getByLabelText('Property type')).toHaveValue('apartment');
+    expect(screen.getByLabelText('Minimum price')).toHaveValue(50000);
+    expect(screen.getByLabelText('Maximum price')).toHaveValue(100000);
+    expect(getProperties).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        params: expect.objectContaining({
+          city: 'Islamabad',
+          propertyType: 'apartment',
+          minPrice: '50000',
+          maxPrice: '100000',
+        }),
+      }),
+    );
+  });
+
+  it('sanitizes unsupported URL filters before requesting properties', async () => {
+    getProperties.mockResolvedValue(propertyListResponse());
+
+    renderProperties(
+      '/properties?propertyType=castle&minPrice=invalid&bedrooms=-1&city=Lahore',
+    );
+
+    await screen.findByRole('heading', { name: apartment.title });
+    expect(screen.getByLabelText('City')).toHaveValue('Lahore');
+    expect(screen.getByLabelText('Property type')).toHaveValue('');
+    expect(screen.getByLabelText('Minimum price')).toHaveValue(null);
+    expect(screen.getByLabelText('Bedrooms')).toHaveValue(null);
+    expect(getProperties).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        params: expect.not.objectContaining({
+          propertyType: expect.anything(),
+          minPrice: expect.anything(),
+          bedrooms: expect.anything(),
+        }),
+      }),
     );
   });
 

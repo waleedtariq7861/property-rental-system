@@ -23,7 +23,7 @@ function Profile() {
         <div className="row justify-content-center">
           <div className="col-lg-8">
             <div className="content-card profile-card">
-              <span className="section-label">Protected Phase 1 route</span>
+              <span className="section-label">Secure account profile</span>
               <h1 className="display-6 fw-bold mt-2 mb-3">Your RentEase profile</h1>
               <p className="section-intro mb-4">
                 This information was restored from the authenticated backend

@@ -23,9 +23,9 @@ function Contact() {
                   Use these details for project communication and support.
                 </p>
                 <div className="d-grid gap-3 justify-content-center">
-                  <a className="btn btn-brand btn-lg" href="mailto:waleedtariq7861@gamil.com">
+                  <a className="btn btn-brand btn-lg" href="mailto:waleedtariq7861@gmail.com">
                     <i className="bi bi-envelope me-2" aria-hidden="true" />
-                    waleedtariq7861@gamil.com
+                    waleedtariq7861@gmail.com
                   </a>
                   <a className="btn btn-outline-brand btn-lg" href="tel:+923480577644">
                     <i className="bi bi-telephone me-2" aria-hidden="true" />

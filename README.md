@@ -2,8 +2,8 @@
 
 RentEase is a full-stack property rental project for tenants, property owners,
 and administrators. Phase 1 established secure authentication, Phase 2 added
-property discovery and owner property management, and Phase 3 adds the tenant
-rental request workflow plus owner request decisions.
+property discovery and owner property management, and Phase 3 completes the
+tenant/owner rental workflow plus secure administrator monitoring and management.
 
 ## Phase 1 Features
 
@@ -103,7 +103,18 @@ rental request workflow plus owner request decisions.
 - Current database-role verification on every admin API
 - Responsive loading, empty, success, and error states
 
-Phase 3 Day 5 administrative actions are intentionally reserved for later work.
+## Phase 3 Day 5 Features
+
+- Admin account activation and deactivation with immediate JWT revocation
+- Dependency-aware user deletion with current-admin self-protection
+- Safe property removal while preserving listings with rental history
+- Reusable user, property, and rental-request detail dialogs
+- Confirmation dialogs before destructive user and property actions
+- Rental-request search and status monitoring filters
+- Database transactions and row locks around administrative mutations
+- Responsive action loading, success, error, and protected-record states
+
+Phase 3 is complete. Phase 4 functionality is intentionally not included.
 
 ## Technology Stack
 
@@ -344,10 +355,15 @@ transition.
 | GET | `/api/admin/users` | Authenticated admin |
 | GET | `/api/admin/properties` | Authenticated admin |
 | GET | `/api/admin/rental-requests` | Authenticated admin |
+| PATCH | `/api/admin/users/:id/status` | Authenticated admin |
+| DELETE | `/api/admin/users/:id` | Authenticated admin |
+| DELETE | `/api/admin/properties/:id` | Authenticated admin |
 
 Admin endpoints reload the current account from the database before checking
-its role. They expose safe account fields and read-only platform data; no user,
-property, or rental-request mutation actions are included in Day 4.
+its role. Status updates accept only `active` or `deactivated`, and the current
+administrator cannot deactivate or delete their own account. User and property
+deletions preserve relational history by rejecting records that still have
+owned properties or rental activity.
 
 ## Testing
 
@@ -380,11 +396,12 @@ duplicate prevention, tenant isolation, owner-property request isolation,
 pending-only accept and reject decisions, tenant dashboard summaries,
 pending-only cancellation, rental-request UI feedback, admin-only API access,
 safe user reporting, platform statistics, recent admin activity panels, and
-admin directory search and filters.
+admin directory search and filters. Phase 3 Day 5 coverage verifies admin role
+enforcement, account status persistence and token revocation, protected-record
+deletion rules, confirmation workflows, detailed records, and request monitoring.
 
 ## Current Scope
 
-Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–4 rental-request creation,
-owner management, the Tenant Dashboard, and the read-only Admin Dashboard are
-included. Favorites and Phase 3 Day 5 administrative actions are not included
-yet.
+Authentication, Phase 2 Days 1–5, and Phase 3 Days 1–5 are included. This covers
+rental-request creation, owner decisions, tenant tracking and cancellation, and
+the complete Admin Management module. Phase 4 functionality is not included.

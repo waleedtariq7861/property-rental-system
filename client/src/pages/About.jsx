@@ -24,13 +24,13 @@ function About() {
               <span className="section-label">Our direction</span>
               <h2 className="display-6 fw-bold mt-2 mb-3">A professional platform with a practical core</h2>
               <p className="section-intro">
-                The project begins with dependable architecture and a simple
-                interface. Future phases will add secure accounts, property
-                workflows, favorites, rental requests, and administration.
+                RentEase combines dependable architecture with a focused
+                interface for secure accounts, property workflows, rental
+                requests, and administration.
               </p>
               <p className="mb-0 text-secondary">
-                Phase 1 intentionally focuses on the shared foundation those
-                modules need, keeping later development organized and testable.
+                The completed Phase 3 workflow keeps tenant, owner, and admin
+                responsibilities clearly separated, organized, and testable.
               </p>
             </div>
             <div className="col-lg-5 offset-lg-1">

@@ -44,7 +44,7 @@ function RoleAccess({ role }) {
         <div className="row justify-content-center">
           <div className="col-lg-8">
             <div className="content-card">
-              <span className="section-label">Role authorization test</span>
+              <span className="section-label">Role authorization</span>
               <h1 className="display-6 fw-bold mt-2 mb-3">
                 {ROLE_LABELS[role]} access
               </h1>

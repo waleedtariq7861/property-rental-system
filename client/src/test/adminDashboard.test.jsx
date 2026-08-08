@@ -5,19 +5,25 @@ import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext.jsx';
 import AppRoutes from '../routes/AppRoutes.jsx';
 import {
+  deleteAdminProperty,
+  deleteAdminUser,
   getAdminDashboard,
   getAdminProperties,
   getAdminRentalRequests,
   getAdminUsers,
+  updateAdminUserStatus,
 } from '../services/adminDashboardService.js';
 import { getAuthenticatedProfile } from '../services/authService.js';
 import { saveStoredAuth } from '../utils/authStorage.js';
 
 vi.mock('../services/adminDashboardService.js', () => ({
+  deleteAdminProperty: vi.fn(),
+  deleteAdminUser: vi.fn(),
   getAdminDashboard: vi.fn(),
   getAdminProperties: vi.fn(),
   getAdminRentalRequests: vi.fn(),
   getAdminUsers: vi.fn(),
+  updateAdminUserStatus: vi.fn(),
 }));
 
 vi.mock('../services/authService.js', () => ({
@@ -46,6 +52,8 @@ const users = [
     ...adminUser,
     phone: '+92-300-0001001',
     accountStatus: 'active',
+    propertyCount: 0,
+    rentalRequestCount: 0,
     createdAt: '2026-08-04T10:00:00.000Z',
     updatedAt: '2026-08-04T10:00:00.000Z',
   },
@@ -53,6 +61,8 @@ const users = [
     ...ownerUser,
     phone: '+92-300-0001002',
     accountStatus: 'active',
+    propertyCount: 2,
+    rentalRequestCount: 2,
     createdAt: '2026-08-03T09:00:00.000Z',
     updatedAt: '2026-08-03T09:00:00.000Z',
   },
@@ -63,6 +73,8 @@ const users = [
     phone: null,
     role: 'tenant',
     accountStatus: 'pending',
+    propertyCount: 0,
+    rentalRequestCount: 2,
     createdAt: '2026-08-02T08:00:00.000Z',
     updatedAt: '2026-08-02T08:00:00.000Z',
   },
@@ -93,6 +105,7 @@ const properties = [
     approvalStatus: 'approved',
     imageUrl: null,
     contactNumber: '+92-300-0001002',
+    rentalRequestCount: 1,
     createdAt: '2026-08-04T11:00:00.000Z',
     updatedAt: '2026-08-04T11:00:00.000Z',
   },
@@ -120,6 +133,7 @@ const properties = [
     approvalStatus: 'approved',
     imageUrl: null,
     contactNumber: null,
+    rentalRequestCount: 1,
     createdAt: '2026-08-01T11:00:00.000Z',
     updatedAt: '2026-08-01T11:00:00.000Z',
   },
@@ -242,7 +256,7 @@ describe('Admin dashboard page', () => {
     );
   });
 
-  it('renders statistics, recent activity, all data views, and no Day 5 actions', async () => {
+  it('renders statistics, recent activity, detailed data views, and Day 5 actions', async () => {
     renderApp();
 
     expect(
@@ -293,11 +307,18 @@ describe('Admin dashboard page', () => {
       .closest('section');
     expect(within(requestsSection).getByText('Please arrange a viewing this weekend.'))
       .toBeInTheDocument();
-    expect(within(requestsSection).getByText('Accepted')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i }))
-      .not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /approve|reject|suspend/i }))
-      .not.toBeInTheDocument();
+    expect(within(requestsSection).getByText('Accepted', {
+      selector: '.admin-status-badge',
+    })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View Maham Tenant' }))
+      .toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activate Maham Tenant' }))
+      .toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete Maham Tenant' }))
+      .toBeDisabled();
+    expect(screen.getByRole('button', {
+      name: 'View rental request 701',
+    })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
       'href',
       '/admin/dashboard',
@@ -385,6 +406,193 @@ describe('Admin dashboard page', () => {
     expect(getAdminProperties).toHaveBeenCalledTimes(1);
   });
 
+  it('activates and deactivates accounts while keeping the directory in sync', async () => {
+    const user = userEvent.setup();
+    const updatedOwner = {
+      ...users[1],
+      accountStatus: 'deactivated',
+      updatedAt: '2026-08-05T10:00:00.000Z',
+    };
+    updateAdminUserStatus.mockResolvedValue({
+      success: true,
+      message: 'User account deactivated successfully.',
+      data: { user: updatedOwner },
+    });
+
+    renderApp();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'Deactivate Omar Property Owner',
+    }));
+
+    expect(updateAdminUserStatus).toHaveBeenCalledWith(ownerUser.id, 'deactivated');
+    expect(await screen.findByText('User account deactivated successfully.'))
+      .toBeInTheDocument();
+    const usersSection = screen.getByRole('heading', { name: 'All Users' })
+      .closest('section');
+    const ownerRow = within(usersSection)
+      .getByText('Omar Property Owner')
+      .closest('tr');
+    expect(within(ownerRow).getByText('Deactivated')).toBeInTheDocument();
+    expect(within(ownerRow).getByRole('button', {
+      name: 'Activate Omar Property Owner',
+    })).toBeInTheDocument();
+  });
+
+  it('confirms and deletes an eligible user while updating dashboard totals', async () => {
+    const user = userEvent.setup();
+    const deletableUser = {
+      id: 1004,
+      fullName: 'Hiba New Tenant',
+      email: 'hiba.tenant@example.test',
+      phone: null,
+      role: 'tenant',
+      accountStatus: 'active',
+      propertyCount: 0,
+      rentalRequestCount: 0,
+      createdAt: '2026-08-05T08:00:00.000Z',
+      updatedAt: '2026-08-05T08:00:00.000Z',
+    };
+    getAdminUsers.mockResolvedValue(
+      listResponse('users', [...users, deletableUser]),
+    );
+    deleteAdminUser.mockResolvedValue({
+      success: true,
+      message: 'User deleted successfully.',
+      data: { userId: deletableUser.id },
+    });
+
+    renderApp();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'Delete Hiba New Tenant',
+    }));
+    const confirmation = screen.getByRole('dialog', {
+      name: 'Delete user account?',
+    });
+    expect(within(confirmation).getByText('Hiba New Tenant')).toBeInTheDocument();
+    expect(deleteAdminUser).not.toHaveBeenCalled();
+
+    await user.click(within(confirmation).getByRole('button', {
+      name: 'Delete User',
+    }));
+
+    expect(deleteAdminUser).toHaveBeenCalledWith(deletableUser.id);
+    expect(await screen.findByText('User deleted successfully.'))
+      .toBeInTheDocument();
+    expect(screen.queryByText('Hiba New Tenant')).not.toBeInTheDocument();
+    const totalUsersCard = screen.getByText('Total Users').closest('article');
+    expect(within(totalUsersCard).getByText('2')).toBeInTheDocument();
+  });
+
+  it('confirms property removal and keeps server errors inside the dialog', async () => {
+    const user = userEvent.setup();
+    const removableProperty = {
+      ...properties[0],
+      id: 503,
+      title: 'Unreviewed Studio Listing',
+      propertyType: 'studio',
+      rentalRequestCount: 0,
+    };
+    getAdminProperties.mockResolvedValue(
+      listResponse('properties', [...properties, removableProperty]),
+    );
+    deleteAdminProperty
+      .mockRejectedValueOnce({
+        response: {
+          data: { message: 'Property removal could not be completed.' },
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        message: 'Property removed successfully.',
+        data: { propertyId: removableProperty.id },
+      });
+
+    renderApp();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'Delete Unreviewed Studio Listing',
+    }));
+    let confirmation = screen.getByRole('dialog', {
+      name: 'Delete property listing?',
+    });
+    await user.click(within(confirmation).getByRole('button', {
+      name: 'Delete Property',
+    }));
+
+    expect(await within(confirmation).findByText(
+      'Property removal could not be completed.',
+    )).toBeInTheDocument();
+    expect(screen.getByRole('button', {
+      name: 'Delete Unreviewed Studio Listing',
+    })).toBeInTheDocument();
+
+    await user.click(within(confirmation).getByRole('button', {
+      name: 'Delete Property',
+    }));
+
+    expect(deleteAdminProperty).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText('Property removed successfully.'))
+      .toBeInTheDocument();
+    expect(screen.queryByText('Unreviewed Studio Listing')).not.toBeInTheDocument();
+  });
+
+  it('shows complete record dialogs and filters rental request monitoring', async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(await screen.findByRole('button', {
+      name: 'View Maham Tenant',
+    }));
+    const userDialog = screen.getByRole('dialog', { name: 'User details' });
+    expect(within(userDialog).getByText('maham.tenant@example.test'))
+      .toBeInTheDocument();
+    expect(within(userDialog).getByText('2', { selector: 'dd' }))
+      .toBeInTheDocument();
+    await user.click(within(userDialog).getByRole('button', {
+      name: 'Close details',
+    }));
+
+    await user.click(screen.getByRole('button', {
+      name: 'View Executive Apartment in F-10',
+    }));
+    const propertyDialog = screen.getByRole('dialog', {
+      name: 'Property details',
+    });
+    expect(within(propertyDialog).getByText(
+      'A furnished apartment near the city centre.',
+    )).toBeInTheDocument();
+    expect(within(propertyDialog).getByText('+92-300-0001002'))
+      .toBeInTheDocument();
+    await user.click(within(propertyDialog).getByRole('button', {
+      name: 'Close details',
+    }));
+
+    const requestsSection = screen
+      .getByRole('heading', { name: 'All Rental Requests' })
+      .closest('section');
+    await user.selectOptions(
+      within(requestsSection).getByRole('combobox', { name: 'Request status' }),
+      'approved',
+    );
+    expect(within(requestsSection).getByText('Showing 1 of 2'))
+      .toBeInTheDocument();
+    expect(within(requestsSection).getByText('Family House in Bahria Town'))
+      .toBeInTheDocument();
+    expect(within(requestsSection).queryByText('Executive Apartment in F-10'))
+      .not.toBeInTheDocument();
+
+    await user.click(within(requestsSection).getByRole('button', {
+      name: 'View rental request 702',
+    }));
+    const requestDialog = screen.getByRole('dialog', {
+      name: 'Rental request details',
+    });
+    expect(within(requestDialog).getByText('#702')).toBeInTheDocument();
+    expect(within(requestDialog).getByText('Accepted')).toBeInTheDocument();
+  });
+
   it('shows an API error, retries all requests, and renders empty states', async () => {
     const user = userEvent.setup();
     getAdminDashboard
@@ -449,6 +657,9 @@ describe('Admin dashboard page', () => {
       expect(getAdminUsers).not.toHaveBeenCalled();
       expect(getAdminProperties).not.toHaveBeenCalled();
       expect(getAdminRentalRequests).not.toHaveBeenCalled();
+      expect(updateAdminUserStatus).not.toHaveBeenCalled();
+      expect(deleteAdminUser).not.toHaveBeenCalled();
+      expect(deleteAdminProperty).not.toHaveBeenCalled();
     });
   });
 });

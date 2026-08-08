@@ -39,7 +39,7 @@ function Footer() {
             <ul className="list-unstyled footer-contact mb-3">
               <li>
                 <i className="bi bi-envelope" aria-hidden="true" />
-                <a href="mailto:waleedtariq7861@gamil.com">waleedtariq7861@gamil.com</a>
+                <a href="mailto:waleedtariq7861@gmail.com">waleedtariq7861@gmail.com</a>
               </li>
               <li>
                 <i className="bi bi-telephone" aria-hidden="true" />
@@ -60,7 +60,7 @@ function Footer() {
               <a href="https://linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn">
                 <i className="bi bi-linkedin" aria-hidden="true" />
               </a>
-              <a href="https://wa.me/" target="_blank" rel="noreferrer" aria-label="WhatsApp">
+              <a href="https://wa.me/923480577644" target="_blank" rel="noreferrer" aria-label="WhatsApp">
                 <i className="bi bi-whatsapp" aria-hidden="true" />
               </a>
             </div>
@@ -70,7 +70,7 @@ function Footer() {
       <div className="footer-bottom">
         <div className="container py-3 d-flex flex-column flex-sm-row justify-content-between gap-2">
           <small>© {new Date().getFullYear()} RentEase. All rights reserved.</small>
-          <small>Phase 1 · Project foundation</small>
+          <small>Phase 3 · Rental management complete</small>
         </div>
       </div>
     </footer>

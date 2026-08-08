@@ -8,16 +8,21 @@ import {
   AdminRentalRequestsTable,
   AdminUsersTable,
 } from '../components/AdminDataTables.jsx';
+import AdminConfirmationModal from '../components/AdminConfirmationModal.jsx';
+import AdminDetailsModal from '../components/AdminDetailsModal.jsx';
 import AdminFilterToolbar from '../components/AdminFilterToolbar.jsx';
 import AdminRecentPanels from '../components/AdminRecentPanels.jsx';
 import AdminStatCards from '../components/AdminStatCards.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
+  deleteAdminProperty,
+  deleteAdminUser,
   getAdminDashboard,
   getAdminProperties,
   getAdminRentalRequests,
   getAdminUsers,
+  updateAdminUserStatus,
 } from '../services/adminDashboardService.js';
 import { getApiErrorMessage } from '../utils/getApiErrorMessage.js';
 
@@ -60,6 +65,15 @@ const APPROVAL_OPTIONS = [
   { value: 'approved', label: 'Approved' },
   { value: 'pending', label: 'Pending' },
   { value: 'rejected', label: 'Rejected' },
+];
+
+const RENTAL_REQUEST_STATUS_OPTIONS = [
+  { value: 'all', label: 'All request statuses' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Accepted' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'completed', label: 'Completed' },
 ];
 
 const STATISTIC_FIELDS = [
@@ -156,6 +170,13 @@ function AdminDashboard() {
   const [propertyType, setPropertyType] = useState('all');
   const [availabilityStatus, setAvailabilityStatus] = useState('all');
   const [approvalStatus, setApprovalStatus] = useState('all');
+  const [requestSearch, setRequestSearch] = useState('');
+  const [requestStatus, setRequestStatus] = useState('all');
+  const [activeAction, setActiveAction] = useState('');
+  const [actionFeedback, setActionFeedback] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
+  const [confirmationError, setConfirmationError] = useState('');
+  const [details, setDetails] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -274,6 +295,185 @@ function AdminDashboard() {
     propertyType,
   ]);
 
+  const filteredRentalRequests = useMemo(() => {
+    const normalizedSearch = requestSearch.trim().toLowerCase();
+
+    return rentalRequests.filter((rentalRequest) => {
+      const matchesStatus =
+        requestStatus === 'all' || rentalRequest.status === requestStatus;
+      const searchContent = [
+        rentalRequest.propertyTitle,
+        rentalRequest.propertyCity,
+        rentalRequest.propertyType,
+        rentalRequest.tenantName,
+        rentalRequest.tenantEmail,
+        rentalRequest.ownerName,
+        rentalRequest.ownerEmail,
+        rentalRequest.message,
+        rentalRequest.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return matchesStatus && searchContent.includes(normalizedSearch);
+    });
+  }, [rentalRequests, requestSearch, requestStatus]);
+
+  function replaceUser(updatedUser) {
+    setUsers((currentUsers) =>
+      currentUsers.map((user) =>
+        Number(user.id) === Number(updatedUser.id) ? updatedUser : user,
+      ),
+    );
+    setDashboard((currentDashboard) =>
+      currentDashboard
+        ? {
+            ...currentDashboard,
+            recentUsers: currentDashboard.recentUsers.map((user) =>
+              Number(user.id) === Number(updatedUser.id) ? updatedUser : user,
+            ),
+          }
+        : currentDashboard,
+    );
+  }
+
+  async function handleUserStatusChange(user, accountStatusValue) {
+    setActionFeedback(null);
+    setActiveAction(`user-status-${user.id}`);
+
+    try {
+      const result = await updateAdminUserStatus(user.id, accountStatusValue);
+      const updatedUser = result.data?.user;
+
+      if (!isUsersResponse({ users: [updatedUser] })) {
+        throw new TypeError('The updated user response is invalid.');
+      }
+
+      replaceUser(updatedUser);
+      setActionFeedback({ type: 'success', message: result.message });
+    } catch (error) {
+      setActionFeedback({
+        type: 'error',
+        message:
+          error instanceof TypeError
+            ? 'The account was updated, but its latest record could not be loaded.'
+            : getApiErrorMessage(error),
+      });
+    } finally {
+      setActiveAction('');
+    }
+  }
+
+  function openDeleteConfirmation(resourceType, record) {
+    setActionFeedback(null);
+    setConfirmationError('');
+    setConfirmation({ resourceType, record });
+  }
+
+  function closeDeleteConfirmation() {
+    if (!activeAction) {
+      setConfirmation(null);
+      setConfirmationError('');
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmation) {
+      return;
+    }
+
+    const { resourceType, record } = confirmation;
+    setConfirmationError('');
+    setActiveAction(`delete-${resourceType}-${record.id}`);
+
+    try {
+      if (resourceType === 'user') {
+        const result = await deleteAdminUser(record.id);
+
+        if (Number(result.data?.userId) !== Number(record.id)) {
+          throw new TypeError('The deleted user response is invalid.');
+        }
+
+        setUsers((currentUsers) =>
+          currentUsers.filter((user) => Number(user.id) !== Number(record.id)),
+        );
+        setDashboard((currentDashboard) => {
+          if (!currentDashboard) {
+            return currentDashboard;
+          }
+
+          const roleStatistic =
+            record.role === 'owner'
+              ? 'totalOwners'
+              : record.role === 'tenant'
+                ? 'totalTenants'
+                : null;
+          const statistics = {
+            ...currentDashboard.statistics,
+            totalUsers: Math.max(0, currentDashboard.statistics.totalUsers - 1),
+          };
+
+          if (roleStatistic) {
+            statistics[roleStatistic] = Math.max(
+              0,
+              currentDashboard.statistics[roleStatistic] - 1,
+            );
+          }
+
+          return {
+            ...currentDashboard,
+            statistics,
+            recentUsers: currentDashboard.recentUsers.filter(
+              (user) => Number(user.id) !== Number(record.id),
+            ),
+          };
+        });
+        setActionFeedback({ type: 'success', message: result.message });
+      } else {
+        const result = await deleteAdminProperty(record.id);
+
+        if (Number(result.data?.propertyId) !== Number(record.id)) {
+          throw new TypeError('The deleted property response is invalid.');
+        }
+
+        setProperties((currentProperties) =>
+          currentProperties.filter(
+            (property) => Number(property.id) !== Number(record.id),
+          ),
+        );
+        setDashboard((currentDashboard) =>
+          currentDashboard
+            ? {
+                ...currentDashboard,
+                statistics: {
+                  ...currentDashboard.statistics,
+                  totalProperties: Math.max(
+                    0,
+                    currentDashboard.statistics.totalProperties - 1,
+                  ),
+                },
+                recentProperties: currentDashboard.recentProperties.filter(
+                  (property) => Number(property.id) !== Number(record.id),
+                ),
+              }
+            : currentDashboard,
+        );
+        setActionFeedback({ type: 'success', message: result.message });
+      }
+
+      setConfirmation(null);
+    } catch (error) {
+      setConfirmationError(
+        error instanceof TypeError
+          ? 'The action completed, but its confirmation response was invalid.'
+          : getApiErrorMessage(error),
+      );
+    } finally {
+      setActiveAction('');
+    }
+  }
+
   const admin = dashboard?.admin || currentUser;
 
   return (
@@ -293,8 +493,8 @@ function AdminDashboard() {
                 </span>
                 <h1>RentEase Admin Dashboard</h1>
                 <p>
-                  Monitor platform accounts, property inventory, and rental
-                  request activity from one secure overview.
+                  Manage platform accounts and property inventory while
+                  monitoring every rental request from one secure workspace.
                 </p>
               </div>
               <div className="admin-dashboard-header-mark" aria-hidden="true">
@@ -335,6 +535,26 @@ function AdminDashboard() {
                   <i className="bi bi-check-circle-fill" aria-hidden="true" />
                   Dashboard data is up to date
                 </div>
+
+                {actionFeedback && (
+                  <div
+                    className={`admin-action-feedback is-${actionFeedback.type}`}
+                    role={actionFeedback.type === 'error' ? 'alert' : 'status'}
+                  >
+                    <i
+                      className={`bi ${actionFeedback.type === 'error' ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'}`}
+                      aria-hidden="true"
+                    />
+                    <span>{actionFeedback.message}</span>
+                    <button
+                      aria-label="Dismiss notification"
+                      onClick={() => setActionFeedback(null)}
+                      type="button"
+                    >
+                      <i className="bi bi-x-lg" aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
 
                 <AdminStatCards statistics={dashboard.statistics} />
 
@@ -392,7 +612,16 @@ function AdminDashboard() {
                     searchTerm={userSearch}
                     totalCount={users.length}
                   />
-                  <AdminUsersTable users={filteredUsers} />
+                  <AdminUsersTable
+                    activeAction={activeAction}
+                    currentAdminId={admin.id}
+                    onChangeStatus={handleUserStatusChange}
+                    onDelete={(user) => openDeleteConfirmation('user', user)}
+                    onViewDetails={(user) =>
+                      setDetails({ resourceType: 'user', record: user })
+                    }
+                    users={filteredUsers}
+                  />
                 </section>
 
                 <section
@@ -443,7 +672,16 @@ function AdminDashboard() {
                     searchTerm={propertySearch}
                     totalCount={properties.length}
                   />
-                  <AdminPropertiesTable properties={filteredProperties} />
+                  <AdminPropertiesTable
+                    activeAction={activeAction}
+                    onDelete={(property) =>
+                      openDeleteConfirmation('property', property)
+                    }
+                    onViewDetails={(property) =>
+                      setDetails({ resourceType: 'property', record: property })
+                    }
+                    properties={filteredProperties}
+                  />
                 </section>
 
                 <section
@@ -452,18 +690,88 @@ function AdminDashboard() {
                   aria-labelledby="admin-requests-heading"
                 >
                   <AdminSectionHeading
-                    count={`${rentalRequests.length} requests`}
+                    count={`${filteredRentalRequests.length} requests`}
                     eyebrow="Rental activity"
                     id="admin-requests-heading"
                     title="All Rental Requests"
                   />
-                  <AdminRentalRequestsTable rentalRequests={rentalRequests} />
+                  <AdminFilterToolbar
+                    filters={[
+                      {
+                        id: 'admin-request-status',
+                        label: 'Request status',
+                        onChange: setRequestStatus,
+                        options: RENTAL_REQUEST_STATUS_OPTIONS,
+                        value: requestStatus,
+                      },
+                    ]}
+                    idPrefix="admin-requests"
+                    onClear={() => {
+                      setRequestSearch('');
+                      setRequestStatus('all');
+                    }}
+                    onSearchChange={setRequestSearch}
+                    resultCount={filteredRentalRequests.length}
+                    searchPlaceholder="Search property, tenant, owner, or message"
+                    searchTerm={requestSearch}
+                    totalCount={rentalRequests.length}
+                  />
+                  <AdminRentalRequestsTable
+                    onViewDetails={(rentalRequest) =>
+                      setDetails({
+                        resourceType: 'rentalRequest',
+                        record: rentalRequest,
+                      })
+                    }
+                    rentalRequests={filteredRentalRequests}
+                  />
                 </section>
               </>
             )}
           </div>
         </div>
       </div>
+
+      {details && (
+        <AdminDetailsModal
+          onClose={() => setDetails(null)}
+          record={details.record}
+          resourceType={details.resourceType}
+        />
+      )}
+
+      {confirmation && (
+        <AdminConfirmationModal
+          cancelLabel={
+            confirmation.resourceType === 'user' ? 'Keep User' : 'Keep Property'
+          }
+          confirmLabel={
+            confirmation.resourceType === 'user' ? 'Delete User' : 'Delete Property'
+          }
+          errorMessage={confirmationError}
+          isProcessing={activeAction.startsWith('delete-')}
+          message={
+            confirmation.resourceType === 'user' ? (
+              <p>
+                Permanently delete <strong>{confirmation.record.fullName}</strong>?
+                This removes the account and cannot be undone.
+              </p>
+            ) : (
+              <p>
+                Permanently remove <strong>{confirmation.record.title}</strong>?
+                It will disappear from the owner portfolio and public listings.
+              </p>
+            )
+          }
+          onCancel={closeDeleteConfirmation}
+          onConfirm={handleConfirmDelete}
+          title={
+            confirmation.resourceType === 'user'
+              ? 'Delete user account?'
+              : 'Delete property listing?'
+          }
+        />
+      )}
     </div>
   );
 }
